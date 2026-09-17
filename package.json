@@ -1,0 +1,29 @@
+{
+  "name": "steron-transparent-draw",
+  "version": "1.0.3",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build && node scripts/create-release-manifest.mjs",
+    "checksums": "node scripts/create-checksums.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:dist": "playwright test -c playwright.dist.config.js",
+    "test:all": "npm run test && npm run build && npm run test:e2e && npm run test:e2e:dist"
+  },
+  "dependencies": {
+    "drand-client": "1.4.2"
+  },
+  "devDependencies": {
+    "@fontsource/cinzel": "5.2.8",
+    "@playwright/test": "1.55.1",
+    "vite": "7.3.6",
+    "vitest": "4.1.11"
+  }
+}
