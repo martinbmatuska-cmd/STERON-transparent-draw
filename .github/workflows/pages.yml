@@ -39,7 +39,7 @@ jobs:
           292cfecba90e9fb6622b2858b02f46a32ea74d64b2f79619b7964f1a0c74bcef  index.html
           124c6ee7785a0417fe8e2f85c6e898c0f8fe98d0909db23c9e842ad39c454016  package.json
           257b99c4066de7b7c044bccc9e5c934a30286044c7a3556dc38e7d01a061c2c4  vite.config.js
-          7dd959bf1dfc43c9dda05b026df161050d6fc3a98f154ae452217ebce7193cfc  STERON-BUILD-INPUTS-v1.0.3.zip
+          89ff5be957c041796dc327fa1250ea3e9b645c3a04359422d13b783c048a8cc8  STERON-BUILD-INPUTS-v1.0.4.zip
           EOF
           sha256sum -c /tmp/locked.sha256
 
@@ -59,14 +59,14 @@ jobs:
           src/styles.css
           EOF
           LC_ALL=C sort /tmp/expected-files.txt -o /tmp/expected-files.txt
-          unzip -Z1 STERON-BUILD-INPUTS-v1.0.3.zip | sed 's#^\./##' | grep -v '/$' | LC_ALL=C sort > /tmp/archive-files.txt
+          unzip -Z1 STERON-BUILD-INPUTS-v1.0.4.zip | sed 's#^\./##' | grep -v '/$' | LC_ALL=C sort > /tmp/archive-files.txt
           diff -u /tmp/expected-files.txt /tmp/archive-files.txt
 
       - name: Restore locked build inputs
         shell: bash
         run: |
           set -euo pipefail
-          unzip -oq STERON-BUILD-INPUTS-v1.0.3.zip -d .
+          unzip -oq STERON-BUILD-INPUTS-v1.0.4.zip -d .
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -95,13 +95,13 @@ jobs:
             commit: process.env.GITHUB_SHA,
             workflowRunId: process.env.GITHUB_RUN_ID,
             workflowRunAttempt: process.env.GITHUB_RUN_ATTEMPT,
-            releaseVersion: '1.0.3',
+            releaseVersion: '1.0.4',
             drawId: 'steron-2026-09',
             protocol: 'STERON-DRAW-v1',
             entriesSha256: '48e458a0033c67ed19d0c0dc2ef79aa2d1db47db4a0ba21d0dc0e4d40a174185',
             drawEngineSha256: '7c6f575d070a6ea130a3c5b0d7c7bc90dc26a36f5d379c0297b157d8330657c1',
             drandClientSha256: 'f796df5810d149fa1b65c67d17530d7507d30e5fc3ed95efddd41abaa319ca33',
-            buildInputsSha256: '7dd959bf1dfc43c9dda05b026df161050d6fc3a98f154ae452217ebce7193cfc',
+            buildInputsSha256: '89ff5be957c041796dc327fa1250ea3e9b645c3a04359422d13b783c048a8cc8',
             quicknetChainHash: '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971',
             targetRound: 32315212,
             drawTimeUtc: '2026-09-18T16:30:00.000Z',
