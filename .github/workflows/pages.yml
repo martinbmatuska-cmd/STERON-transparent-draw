@@ -80,6 +80,35 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Write accurate public release manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs';
+
+          const manifest = {
+            schemaVersion: 2,
+            releaseVersion: '1.0.4',
+            publicationStatus: 'public-committed',
+            repository: process.env.GITHUB_REPOSITORY,
+            commit: process.env.GITHUB_SHA,
+            drawId: 'steron-2026-09',
+            protocol: 'STERON-DRAW-v1',
+            drawTimeUtc: '2026-09-18T16:30:00.000Z',
+            targetRound: 32315212,
+            quicknetChainHash: '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971',
+            entriesSha256: '48e458a0033c67ed19d0c0dc2ef79aa2d1db47db4a0ba21d0dc0e4d40a174185',
+            drawEngineSha256: '7c6f575d070a6ea130a3c5b0d7c7bc90dc26a36f5d379c0297b157d8330657c1',
+            drandClientSha256: 'f796df5810d149fa1b65c67d17530d7507d30e5fc3ed95efddd41abaa319ca33',
+            buildInputsSha256: '89ff5be957c041796dc327fa1250ea3e9b645c3a04359422d13b783c048a8cc8',
+            deployedFilesChecksums: 'DEPLOYED-FILES.sha256',
+            note: 'This manifest is written by the locked GitHub Pages workflow after the build. DEPLOYED-FILES.sha256 contains SHA-256 checksums of the deployed artifact files.'
+          };
+
+          writeFileSync('dist/release-manifest.json', `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+          NODE
+
       - name: Record deployed build provenance
         shell: bash
         run: |
