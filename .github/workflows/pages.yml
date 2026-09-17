@@ -1,0 +1,135 @@
+name: Deploy locked STERON draw
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: steron-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Verify locked draw-critical files
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/locked.sha256 <<'EOF'
+          48e458a0033c67ed19d0c0dc2ef79aa2d1db47db4a0ba21d0dc0e4d40a174185  entries.txt
+          a2f333c54ec02d8fa2dfb8a982b496765a9573ad02668bd592107df4e0083931  draw-config.json
+          6fa56b766640d21918301f58b47e5b70356e96589c1c21cbccffbdac8d187b5c  draws/steron-2026-09.json
+          900500509aeec362df63f14020d356d41e03dffe461689ad50fb98d3630396ba  src/config.js
+          7c6f575d070a6ea130a3c5b0d7c7bc90dc26a36f5d379c0297b157d8330657c1  src/draw-engine.js
+          f796df5810d149fa1b65c67d17530d7507d30e5fc3ed95efddd41abaa319ca33  src/drand-client.js
+          292cfecba90e9fb6622b2858b02f46a32ea74d64b2f79619b7964f1a0c74bcef  index.html
+          124c6ee7785a0417fe8e2f85c6e898c0f8fe98d0909db23c9e842ad39c454016  package.json
+          257b99c4066de7b7c044bccc9e5c934a30286044c7a3556dc38e7d01a061c2c4  vite.config.js
+          7dd959bf1dfc43c9dda05b026df161050d6fc3a98f154ae452217ebce7193cfc  STERON-BUILD-INPUTS-v1.0.3.zip
+          EOF
+          sha256sum -c /tmp/locked.sha256
+
+      - name: Verify locked build-input archive contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/expected-files.txt <<'EOF'
+          assets/desktop-bg.webp
+          assets/hero-desktop-poster.webp
+          assets/hero-desktop.mp4
+          assets/hero-desktop.webm
+          assets/mobile-bg.webp
+          assets/steron-eye-source.jpg
+          package-lock.json
+          src/steron-draw.js
+          src/styles.css
+          EOF
+          LC_ALL=C sort /tmp/expected-files.txt -o /tmp/expected-files.txt
+          unzip -Z1 STERON-BUILD-INPUTS-v1.0.3.zip | sed 's#^\./##' | grep -v '/$' | LC_ALL=C sort > /tmp/archive-files.txt
+          diff -u /tmp/expected-files.txt /tmp/archive-files.txt
+
+      - name: Restore locked build inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -oq STERON-BUILD-INPUTS-v1.0.3.zip -d .
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Record deployed build provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_MANIFEST_SHA256="$(sha256sum dist/release-manifest.json | awk '{print $1}')"
+          export RELEASE_MANIFEST_SHA256
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs';
+
+          const info = {
+            schemaVersion: 1,
+            repository: process.env.GITHUB_REPOSITORY,
+            commit: process.env.GITHUB_SHA,
+            workflowRunId: process.env.GITHUB_RUN_ID,
+            workflowRunAttempt: process.env.GITHUB_RUN_ATTEMPT,
+            releaseVersion: '1.0.3',
+            drawId: 'steron-2026-09',
+            protocol: 'STERON-DRAW-v1',
+            entriesSha256: '48e458a0033c67ed19d0c0dc2ef79aa2d1db47db4a0ba21d0dc0e4d40a174185',
+            drawEngineSha256: '7c6f575d070a6ea130a3c5b0d7c7bc90dc26a36f5d379c0297b157d8330657c1',
+            drandClientSha256: 'f796df5810d149fa1b65c67d17530d7507d30e5fc3ed95efddd41abaa319ca33',
+            buildInputsSha256: '7dd959bf1dfc43c9dda05b026df161050d6fc3a98f154ae452217ebce7193cfc',
+            quicknetChainHash: '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971',
+            targetRound: 32315212,
+            drawTimeUtc: '2026-09-18T16:30:00.000Z',
+            releaseManifestSha256: process.env.RELEASE_MANIFEST_SHA256,
+          };
+
+          writeFileSync('dist/build-info.json', `${JSON.stringify(info, null, 2)}\n`, 'utf8');
+          NODE
+          (
+            cd dist
+            find . -type f ! -name DEPLOYED-FILES.sha256 -print0               | LC_ALL=C sort -z               | xargs -0 sha256sum
+          ) > dist/DEPLOYED-FILES.sha256
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
