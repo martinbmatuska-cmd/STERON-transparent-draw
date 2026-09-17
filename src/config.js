@@ -20,11 +20,11 @@ export const APP_CONFIG = Object.freeze({
     retryScheduleMs: Object.freeze([0, 250, 750]),
   }),
   release: Object.freeze({
-    version: '1.0.3',
+    version: '1.0.4',
     publicationStatus: 'public-committed',
     publicationLabel: 'Verejne zverejnené',
     sourceUrl: 'https://github.com/martinbmatuska-cmd/STERON-transparent-draw',
-    sourceVersion: 'STERON transparentné žrebovanie v1.0.3 — verejný release',
+    sourceVersion: 'STERON transparentné žrebovanie v1.0.4 — verejný release',
   }),
   links: Object.freeze({
     home: link('/'),
