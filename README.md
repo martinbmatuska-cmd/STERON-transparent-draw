@@ -1,0 +1,1 @@
+# STERON-transparent-draw
