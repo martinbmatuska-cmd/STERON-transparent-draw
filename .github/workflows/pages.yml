@@ -33,7 +33,7 @@ jobs:
           48e458a0033c67ed19d0c0dc2ef79aa2d1db47db4a0ba21d0dc0e4d40a174185  entries.txt
           a2f333c54ec02d8fa2dfb8a982b496765a9573ad02668bd592107df4e0083931  draw-config.json
           6fa56b766640d21918301f58b47e5b70356e96589c1c21cbccffbdac8d187b5c  draws/steron-2026-09.json
-          900500509aeec362df63f14020d356d41e03dffe461689ad50fb98d3630396ba  src/config.js
+          0a1c210a5145e624f34ae22ba1e19280ef38aaf23a09a60fe0dbc85f81f185d3  src/config.js
           7c6f575d070a6ea130a3c5b0d7c7bc90dc26a36f5d379c0297b157d8330657c1  src/draw-engine.js
           f796df5810d149fa1b65c67d17530d7507d30e5fc3ed95efddd41abaa319ca33  src/drand-client.js
           292cfecba90e9fb6622b2858b02f46a32ea74d64b2f79619b7964f1a0c74bcef  index.html
@@ -112,7 +112,9 @@ jobs:
           NODE
           (
             cd dist
-            find . -type f ! -name DEPLOYED-FILES.sha256 -print0               | LC_ALL=C sort -z               | xargs -0 sha256sum
+            find . -type f ! -name DEPLOYED-FILES.sha256 -print0 \
+              | LC_ALL=C sort -z \
+              | xargs -0 sha256sum
           ) > dist/DEPLOYED-FILES.sha256
 
       - name: Configure GitHub Pages
