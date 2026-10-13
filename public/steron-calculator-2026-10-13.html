@@ -1,0 +1,2958 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>STERON – Dotačný model a osobná kalkulačka v8.5</title>
+<style>
+  :root{
+    --bg:#05090d;
+    --bg2:#071019;
+    --panel:#0a1118;
+    --panel2:#0d151e;
+    --gold:#d9aa43;
+    --gold2:#f2d17f;
+    --gold3:#9b7125;
+    --text:#f4efe5;
+    --muted:#b8b0a4;
+    --muted2:#8e8980;
+    --blue:#66d4ff;
+    --green:#a9d88e;
+    --warn:#f0c36a;
+    --line:rgba(217,170,67,.22);
+    --lineStrong:rgba(217,170,67,.48);
+    --radius:22px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 10% 12%,rgba(54,143,186,.12),transparent 24%),
+      radial-gradient(circle at 86% 8%,rgba(202,139,34,.10),transparent 22%),
+      linear-gradient(180deg,#04080c,#071019 46%,#05090d);
+    overflow-x:hidden;
+  }
+
+  button,input,select{font:inherit}
+  button{outline-offset:3px}
+  a{color:inherit}
+
+  input[type="number"]{
+    appearance:textfield;
+    -moz-appearance:textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+
+  .page{
+    width:min(1600px,100%);
+    margin:0 auto;
+    padding-bottom:48px;
+  }
+
+  /* HERO */
+  .hero{
+    min-height:545px;
+    display:grid;
+    grid-template-columns:minmax(380px,48%) minmax(0,52%);
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(217,170,67,.12);
+    background:rgba(3,8,12,.72);
+  }
+  .hero-art{
+    position:relative;
+    overflow:visible;
+    min-height:545px;
+    isolation:isolate;
+    border-right:0;
+    background:#05090d;
+    z-index:1;
+  }
+  .hero-art::before{
+    content:"";
+    position:absolute;
+    inset:-2% -34% -2% -8%;
+    background-image:
+      linear-gradient(90deg,rgba(0,0,0,0) 58%,rgba(5,9,13,.80) 86%,rgba(5,9,13,.98) 100%),
+      linear-gradient(180deg,rgba(0,0,0,.02),rgba(5,9,13,.31)),
+      url("https://static.wixstatic.com/media/877816_541f219837df40279ee79353fdb3b577~mv2.webp");
+    background-size:cover;
+    background-position:46% 50%;
+    transform:scale(1.01);
+    transition:transform .22s ease,filter .22s ease;
+    z-index:-2;
+  }
+  .hero-art::after{
+    content:"";
+    position:absolute;inset:0 -28% 0 0;
+    background:
+      radial-gradient(circle at 64% 36%,rgba(85,203,255,.13),transparent 12%),
+      radial-gradient(circle at 67% 49%,rgba(235,167,48,.12),transparent 22%);
+    mix-blend-mode:screen;
+    z-index:-1;
+    pointer-events:none;
+  }
+  .hero-art.tap-active::before{
+    transform:translateX(7px) scale(1.035);
+    filter:brightness(1.08);
+  }
+  .brand{
+    position:absolute;left:26px;top:44px;
+    font-family:Georgia,"Times New Roman",serif;
+    color:var(--gold2);
+    font-size:27px;letter-spacing:2px;
+    text-shadow:0 2px 18px rgba(0,0,0,.85);
+  }
+  .art-note{
+    position:absolute;left:26px;bottom:42px;width:min(345px,72%);
+    padding:12px 14px;
+    border-left:2px solid var(--gold3);
+    background:linear-gradient(90deg,rgba(3,8,12,.92),rgba(3,8,12,.18));
+    backdrop-filter:blur(1.5px);
+  }
+  .art-note b{
+    display:block;color:var(--gold2);
+    font-family:Georgia,serif;font-size:17px;margin-bottom:3px;
+  }
+  .art-note span{font-size:10.5px;line-height:1.38;color:#d6d0c7}
+  .tap-ring{
+    position:absolute;right:7.5%;top:48%;
+    width:52px;height:52px;border-radius:50%;
+    border:2px solid transparent;opacity:0;pointer-events:none;
+  }
+  .hero-art.tap-active .tap-ring{animation:tapPulse .55s ease-out}
+  .tap-ring::after{
+    content:"";position:absolute;inset:17px;border-radius:50%;
+    background:var(--gold2);
+    box-shadow:0 0 18px 7px rgba(88,198,255,.32),0 0 22px 3px rgba(245,186,62,.55);
+  }
+  @keyframes tapPulse{
+    0%{opacity:0;transform:scale(.45);border-color:rgba(240,197,100,.9)}
+    25%{opacity:1}
+    100%{opacity:0;transform:scale(1.8);border-color:rgba(240,197,100,0)}
+  }
+
+  .hero-content{
+    position:relative;
+    z-index:3;
+    padding:40px 22px 14px;
+    display:flex;flex-direction:column;justify-content:flex-start;
+    background:linear-gradient(90deg,rgba(5,9,13,.72) 0%,rgba(5,9,13,.94) 13%,rgba(5,9,13,.985) 42%,rgba(5,9,13,.99) 100%);
+  }
+  .eyebrow{
+    color:var(--gold);
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    font-size:11px;
+    margin-bottom:9px;
+  }
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:500}
+  h1{
+    margin:0;color:var(--gold2);
+    font-size:clamp(34px,2.9vw,47px);
+    line-height:1.02;
+  }
+  .lead{
+    margin:4px 0 7px;
+    max-width:780px;
+    color:#d2c9bb;
+    font-family:Georgia,serif;
+    font-size:12.5px;line-height:1.32;
+  }
+
+  .live-strip{
+    display:grid;grid-template-columns:1fr .82fr 1.18fr;gap:7px;
+  }
+  .live-card,.metric-card{
+    border:1px solid var(--line);
+    border-radius:13px;
+    background:rgba(8,14,20,.88);
+    padding:9px 11px;
+  }
+  .metric-label{
+    color:#9f978d;font-size:10px;line-height:1.35;
+    text-transform:uppercase;letter-spacing:.07em;
+  }
+  .metric-value{
+    color:var(--gold2);
+    font-family:Georgia,serif;
+    font-size:20px;
+    margin-top:4px;
+  }
+  .metric-note{
+    color:#aaa298;font-size:10.5px;line-height:1.4;margin-top:4px;
+  }
+  .current-value-card{border-color:rgba(217,170,67,.48)}
+  .current-value-card .metric-value{font-size:25px}
+
+  .progress{
+    height:7px;margin:6px 0 7px;
+    border-radius:99px;overflow:hidden;
+    border:1px solid rgba(217,170,67,.13);
+    background:#111922;
+  }
+  .progress span{
+    display:block;height:100%;width:0;
+    background:linear-gradient(90deg,#8e641e,#e8bc59);
+    transition:width .3s ease;
+  }
+
+  .cta{
+    display:block;
+    box-sizing:border-box;
+    width:100%;border:0;border-radius:11px;
+    padding:10px 15px;cursor:pointer;
+    text-decoration:none;
+    text-align:center;
+    background:linear-gradient(180deg,#edc76b,#a9751d);
+    color:#171007;
+    font-family:Georgia,serif;
+  }
+  .cta:hover{filter:brightness(1.06)}
+  .cta strong{display:block;font-size:15px;font-weight:500}
+  .cta small{
+    display:block;margin-top:4px;
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:10.5px;color:#33240d;
+  }
+
+  .hero-content > #joinProject{
+    margin:0 0 6px;
+    min-height:38px;
+    padding:6px 12px;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:12px;
+    align-items:center;
+  }
+  .hero-content > #joinProject strong{
+    font-size:14px;
+    white-space:nowrap;
+  }
+  .hero-content > #joinProject small{
+    margin-top:0;
+    font-size:8.8px;
+    line-height:1.2;
+    text-align:right;
+  }
+
+  .trust-strip{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;
+  }
+  .trust{
+    min-height:52px;
+    display:flex;gap:7px;align-items:center;
+    border:1px solid rgba(217,170,67,.16);
+    border-radius:10px;padding:6px 7px;
+    background:rgba(5,10,15,.62);
+  }
+  .trust-icon{
+    width:24px;height:24px;flex:0 0 24px;color:var(--gold2);
+  }
+  .trust b{display:block;color:#d8c07e;font-size:9px;line-height:1.2}
+  .trust span,.trust a{
+    display:block;color:#928d85;font-size:8.3px;line-height:1.22;margin-top:2px;
+    text-decoration:none;
+  }
+  .trust a:hover{color:var(--gold2)}
+
+
+  /* RESPONSIVE SAFETY */
+  html,body,.page,.hero,.hero-content,.hero-scenario,.content,.section{
+    max-width:100%;
+  }
+  .hero-content,.hero-scenario,.hero-scenario-grid,.range-column,
+  .scenario-topline,.scenario-explainer,.personal-body{
+    min-width:0;
+  }
+  .range-column{overflow:visible}
+  .hero-scenario{overflow:hidden}
+  .scenario-topline > *{min-width:0}
+  .scenario-split{
+    overflow-wrap:anywhere;
+    word-break:normal;
+  }
+
+  /* MAIN CONTENT */
+  .content{
+    width:min(1220px,calc(100% - 34px));
+    margin:28px auto 0;
+  }
+  .section{
+    margin-top:18px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:linear-gradient(180deg,rgba(10,17,24,.96),rgba(6,12,18,.95));
+    padding:24px;
+  }
+  .section-head{
+    display:flex;justify-content:space-between;gap:18px;align-items:end;
+    margin-bottom:16px;
+  }
+  .section-head h2{margin:0;color:var(--gold2);font-size:27px}
+  .section-head p{margin:5px 0 0;color:#a9a197;font-size:12px;line-height:1.5;max-width:720px}
+  .section-kicker{
+    color:var(--gold);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px;
+  }
+
+
+  .hook-flow{
+    display:grid;grid-template-columns:190px 54px 1fr;gap:12px;align-items:center;
+    margin-bottom:16px;
+    border:1px solid rgba(217,170,67,.24);
+    border-radius:15px;padding:13px 15px;background:rgba(217,170,67,.035);
+  }
+  .hook-entry{
+    text-align:center;padding:6px 8px;
+  }
+  .hook-entry strong{
+    display:block;color:var(--gold2);font-family:Georgia,serif;font-size:28px;font-weight:500;
+  }
+  .hook-entry span{display:block;margin-top:3px;color:#a69e93;font-size:10px;line-height:1.35}
+  .hook-arrow{
+    text-align:center;color:var(--gold);font-size:27px;
+  }
+  .hook-result{
+    display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center;
+  }
+  .hook-result b{
+    color:#d8c078;font-size:11px;line-height:1.35;
+  }
+  .hook-result span{
+    display:block;margin-top:3px;color:#9b948a;font-size:10px;line-height:1.45;
+  }
+  .zero-line{
+    margin-top:8px;color:#c9b16e;font-family:Georgia,serif;font-size:12px;
+  }
+
+  .installment-strip{
+    margin-top:5px;border:1px solid rgba(217,170,67,.17);
+    border-radius:10px;padding:6px 8px;background:rgba(4,10,15,.62);
+  }
+  .installment-head{
+    display:flex;justify-content:space-between;gap:12px;align-items:center;
+  }
+  .installment-head b{color:#d6bc75;font-size:10.5px}
+  .installment-head span{color:#928c84;font-size:9.5px;text-align:right}
+  .installment-options{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+  .installment-pill{
+    border:1px solid rgba(217,170,67,.26);border-radius:99px;
+    padding:4px 8px;color:#d7bd78;background:rgba(217,170,67,.04);
+    font-size:8.5px;
+  }
+  .installment-pill.off{
+    color:#6f6b65;border-color:rgba(255,255,255,.08);
+    text-decoration:line-through;background:rgba(255,255,255,.015);
+  }
+  .installment-note{
+    margin-top:4px;color:#8e8981;font-size:8.3px;line-height:1.3;
+  }
+  .installment-link{
+    display:inline-flex;align-items:center;justify-content:center;
+    margin-top:6px;padding:6px 10px;
+    border:1px solid rgba(217,170,67,.30);border-radius:8px;
+    color:#e0c680;text-decoration:none;background:rgba(217,170,67,.055);
+    font-size:8.8px;letter-spacing:.04em;
+  }
+  .installment-link:hover{background:rgba(217,170,67,.11);color:#f0d995}
+
+
+  .hero-hook{
+    display:grid;grid-template-columns:auto 22px 1fr;gap:7px;align-items:center;
+    margin:0 0 6px;padding:6px 9px;
+    border:1px solid rgba(217,170,67,.19);
+    border-radius:10px;background:rgba(217,170,67,.035);
+  }
+  .hero-hook .price{
+    color:var(--gold2);font-family:Georgia,serif;font-size:21px;white-space:nowrap;
+  }
+  .hero-hook .arrow{color:var(--gold);font-size:17px;text-align:center}
+  .hero-hook .copy{color:#c5bdb1;font-size:9.7px;line-height:1.3}
+  .hero-hook .copy b{color:#e0c680;font-weight:600}
+
+  .hero-scenario{
+    margin:6px 0 6px;padding:7px 9px;
+    border:1px solid rgba(217,170,67,.22);
+    border-radius:11px;background:rgba(6,13,19,.90);
+  }
+  .hero-scenario-grid{
+    display:grid;grid-template-columns:minmax(160px,1fr) 145px 145px;gap:7px;align-items:end;
+  }
+  .hero-scenario label{margin-bottom:3px;font-size:8.7px}
+  .hero-scenario input[type="number"]{height:36px;font-size:12px}
+  .hero-scenario .scenario-result{height:44px;padding:5px 9px;border-radius:8px}
+  .hero-scenario .scenario-result span{font-size:7.7px}
+  .hero-scenario .scenario-result strong{font-size:18px;margin-top:1px}
+
+  .hero-scenario-grid > *{min-width:0}
+  #salesExact{
+    min-width:0;
+    max-width:100%;
+    width:100%;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:clip;
+    font-variant-numeric:tabular-nums;
+  }
+  .hero-scenario .scenario-result{
+    min-width:0;
+    overflow:hidden;
+  }
+  .hero-scenario .scenario-result strong{
+    display:block;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:clip;
+    font-variant-numeric:tabular-nums;
+    transform-origin:left center;
+  }
+  .hero-scenario .range-scale{font-size:7.7px}
+
+  .hero-scenario{
+    --scenario-accent:#d9aa43;
+    --scenario-accent2:#f1cf7a;
+    --scenario-fill:87%;
+    transition:border-color .28s ease,box-shadow .28s ease,background .28s ease;
+    box-shadow:0 0 0 1px rgba(217,170,67,.02);
+  }
+  .scenario-topline{
+    display:flex;justify-content:space-between;gap:10px;align-items:flex-end;
+    margin-bottom:6px;
+  }
+  .scenario-kicker{
+    display:block;color:#817b71;font-size:7.5px;letter-spacing:.12em;
+    text-transform:uppercase;margin-bottom:2px;
+  }
+  .scenario-topline strong{
+    color:var(--scenario-accent2);font-size:10.5px;letter-spacing:.04em;
+    transition:color .25s ease;
+  }
+  .scenario-split{
+    color:var(--scenario-accent2);font-size:8px;line-height:1.25;text-align:right;
+    transition:color .25s ease;
+  }
+
+  .milestone-switches{
+    display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;
+    margin-bottom:6px;
+  }
+  .milestone-switch{
+    appearance:none;border:1px solid rgba(217,170,67,.16);
+    border-radius:8px;background:rgba(255,255,255,.018);color:#8f8981;
+    padding:4px 4px 3px;cursor:pointer;min-width:0;
+    transition:border-color .2s ease,background .2s ease,color .2s ease,transform .18s ease,box-shadow .2s ease;
+  }
+  .milestone-switch:hover{transform:translateY(-1px);border-color:rgba(217,170,67,.42)}
+  .milestone-switch span{
+    display:block;font-size:6.8px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .milestone-switch b{
+    display:block;margin-top:1px;font-family:Georgia,serif;font-size:11px;font-weight:500;color:#b8ad9d;
+  }
+  .milestone-switch.active{
+    color:#e9dfd0;border-color:var(--scenario-accent);
+    background:color-mix(in srgb,var(--scenario-accent) 11%,transparent);
+    box-shadow:0 0 14px color-mix(in srgb,var(--scenario-accent) 16%,transparent);
+  }
+  .milestone-switch.active b{color:var(--scenario-accent2)}
+  .milestone-switch.major{border-color:rgba(87,170,196,.30)}
+  .milestone-switch.success{border-color:rgba(241,207,122,.34)}
+
+  #salesRange{
+    -webkit-appearance:none;
+    appearance:none;
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    height:34px;
+    margin:0;
+    padding:0;
+    border:0;
+    outline:none;
+    cursor:pointer;
+    background:transparent;
+    touch-action:pan-y;
+  }
+  #salesRange::-webkit-slider-runnable-track{
+    width:100%;
+    height:9px;
+    border-radius:99px;
+    border:1px solid rgba(217,170,67,.18);
+    background:linear-gradient(90deg,
+      var(--scenario-accent) 0%,
+      var(--scenario-accent) var(--scenario-fill),
+      #2b3239 var(--scenario-fill),
+      #2b3239 100%);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.42);
+  }
+  #salesRange::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width:24px;
+    height:24px;
+    margin-top:-8px;
+    border-radius:50%;
+    border:3px solid var(--scenario-accent2);
+    background:#f4f1ea;
+    box-shadow:
+      0 0 0 4px rgba(217,170,67,.13),
+      0 0 16px rgba(217,170,67,.30);
+  }
+  #salesRange::-moz-range-track{
+    width:100%;
+    height:9px;
+    border-radius:99px;
+    border:1px solid rgba(217,170,67,.18);
+    background:linear-gradient(90deg,
+      var(--scenario-accent) 0%,
+      var(--scenario-accent) var(--scenario-fill),
+      #2b3239 var(--scenario-fill),
+      #2b3239 100%);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.42);
+  }
+  #salesRange::-moz-range-thumb{
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    border:3px solid var(--scenario-accent2);
+    background:#f4f1ea;
+    box-shadow:
+      0 0 0 4px rgba(217,170,67,.13),
+      0 0 16px rgba(217,170,67,.30);
+  }
+  #salesRange:focus-visible::-webkit-slider-thumb{
+    outline:3px solid rgba(102,212,255,.65);
+    outline-offset:3px;
+  }
+  #salesRange:focus-visible::-moz-range-thumb{
+    outline:3px solid rgba(102,212,255,.65);
+    outline-offset:3px;
+  }
+  .hero-scenario .range-scale{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:0;margin-top:3px;
+    color:#716d67;font-size:6.8px;
+  }
+  .hero-scenario .range-scale span{text-align:center}
+  .hero-scenario .range-scale span:first-child{text-align:left}
+  .hero-scenario .range-scale span:last-child{text-align:right}
+
+  .scenario-explainer{
+    display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+    margin-top:6px;padding:6px 8px;border-radius:9px;
+    border:1px solid color-mix(in srgb,var(--scenario-accent) 25%,transparent);
+    background:color-mix(in srgb,var(--scenario-accent) 4%,rgba(3,8,12,.86));
+    transition:border-color .25s ease,background .25s ease;
+  }
+  .scenario-explainer > div:first-child{min-width:0}
+  .scenario-explainer strong{
+    display:block;
+    max-width:100%;
+    color:var(--scenario-accent2);font-size:9.2px;line-height:1.2;
+    transition:color .25s ease;
+    overflow-wrap:anywhere;
+    word-break:normal;
+  }
+  .scenario-explainer p{margin:2px 0 0;color:#a7a097;font-size:7.8px;line-height:1.3}
+  .scenario-rule{
+    min-width:94px;text-align:center;padding:5px 7px;border-radius:7px;
+    border:1px solid color-mix(in srgb,var(--scenario-accent) 28%,transparent);
+    color:var(--scenario-accent2);font-family:Georgia,serif;font-size:11px;
+    white-space:nowrap;
+  }
+
+  .scenario-success-alert{
+    display:none;margin-top:6px;padding:7px 9px;border-radius:9px;
+    border:1px solid rgba(241,207,122,.54);
+    background:linear-gradient(90deg,rgba(217,170,67,.13),rgba(241,207,122,.035));
+    box-shadow:0 0 24px rgba(217,170,67,.08);
+  }
+  .scenario-success-alert.show{
+    display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;
+    animation:successPop .38s ease both;
+  }
+  .scenario-success-alert b{
+    color:#f1cf7a;font-size:8.5px;letter-spacing:.08em;white-space:nowrap;
+  }
+  .scenario-success-alert span{color:#cfc4b3;font-size:7.8px;line-height:1.3}
+  .scenario-success-alert strong{color:#f1cf7a}
+  @keyframes successPop{
+    from{opacity:0;transform:translateY(5px) scale(.985)}
+    to{opacity:1;transform:none}
+  }
+
+  /* FULL SUCCESS: visual state changes qualitatively, not just numerically */
+  .hero-scenario.success-mode{
+    border-color:rgba(247,217,130,.72);
+    background:
+      radial-gradient(circle at 88% 10%,rgba(247,217,130,.14),transparent 32%),
+      linear-gradient(135deg,rgba(217,170,67,.10),rgba(5,10,15,.94) 42%);
+    box-shadow:
+      inset 0 0 0 1px rgba(247,217,130,.08),
+      0 0 30px rgba(217,170,67,.10);
+  }
+  .hero-scenario.success-mode .scenario-topline strong{
+    display:inline-block;
+    padding:3px 7px;
+    border-radius:6px;
+    background:#e4b84f;
+    color:#101215;
+    text-shadow:none;
+  }
+  .hero-scenario.success-mode .scenario-split{
+    color:#f6db91;
+    font-weight:700;
+  }
+  .hero-scenario.success-mode #salesRange::-webkit-slider-runnable-track{
+    background:linear-gradient(90deg,
+      #f4d77f 0%,
+      #f4d77f var(--scenario-fill),
+      #34270f var(--scenario-fill),
+      #34270f 100%);
+    box-shadow:0 0 12px rgba(241,207,122,.18);
+  }
+  .hero-scenario.success-mode #salesRange::-moz-range-track{
+    background:linear-gradient(90deg,
+      #f4d77f 0%,
+      #f4d77f var(--scenario-fill),
+      #34270f var(--scenario-fill),
+      #34270f 100%);
+    box-shadow:0 0 12px rgba(241,207,122,.18);
+  }
+  .hero-scenario.success-mode #salesRange::-webkit-slider-thumb{
+    background:#11161b;
+    border-color:#f7d982;
+    box-shadow:0 0 0 4px rgba(247,217,130,.18),0 0 22px rgba(247,217,130,.44);
+  }
+  .hero-scenario.success-mode #salesRange::-moz-range-thumb{
+    background:#11161b;
+    border-color:#f7d982;
+    box-shadow:0 0 0 4px rgba(247,217,130,.18),0 0 22px rgba(247,217,130,.44);
+  }
+  .hero-scenario.success-mode .milestone-switch.success.active{
+    background:#e4b84f;
+    border-color:#f7d982;
+    color:#111316;
+    box-shadow:0 0 20px rgba(241,207,122,.24);
+  }
+  .hero-scenario.success-mode .milestone-switch.success.active b{
+    color:#111316;
+  }
+  .milestone-switch.disabled-past{
+    opacity:.32;
+    cursor:not-allowed;
+    filter:grayscale(.75);
+  }
+  .milestone-switch.disabled-past:hover{
+    transform:none;
+    border-color:rgba(217,170,67,.16);
+  }
+
+
+  .hero-support{
+    width:min(1220px,calc(100% - 28px));
+    margin:10px auto 0;
+    display:grid;
+    grid-template-columns:1.05fr 1.95fr;
+    gap:10px;
+    align-items:stretch;
+  }
+  .hero-support .installment-strip{margin-top:0;height:100%}
+
+  .credibility-column{
+    display:grid;
+    grid-template-rows:auto auto;
+    gap:7px;
+    min-width:0;
+  }
+
+  .author-medallion{
+    border:1px solid rgba(217,170,67,.25);
+    border-radius:12px;
+    padding:10px 11px;
+    background:
+      radial-gradient(circle at 92% 8%,rgba(241,207,122,.09),transparent 34%),
+      linear-gradient(135deg,rgba(217,170,67,.055),rgba(5,10,15,.78));
+    box-shadow:inset 0 0 0 1px rgba(241,207,122,.02);
+  }
+  .author-medallion-head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:8px;
+  }
+  .author-medallion-kicker{
+    color:#958c7d;
+    font-size:7.4px;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+    margin-bottom:2px;
+  }
+  .author-medallion h3{
+    margin:0;
+    color:#e7cc85;
+    font-family:Georgia,serif;
+    font-size:15px;
+    line-height:1.12;
+    font-weight:500;
+  }
+  .author-medallion-badge{
+    flex:0 0 auto;
+    border:1px solid rgba(217,170,67,.28);
+    border-radius:999px;
+    padding:4px 7px;
+    color:#cdb77a;
+    background:rgba(217,170,67,.04);
+    font-size:7.4px;
+    letter-spacing:.06em;
+    white-space:nowrap;
+  }
+
+  .author-timeline{
+    display:grid;
+    grid-template-columns:1.25fr 1fr 1fr 1fr;
+    gap:6px;
+  }
+  .author-event{
+    min-width:0;
+    padding:6px 7px;
+    border-left:1px solid rgba(217,170,67,.24);
+    background:rgba(255,255,255,.012);
+    border-radius:0 7px 7px 0;
+  }
+  .author-event-year{
+    color:#d7b55f;
+    font-size:8px;
+    line-height:1;
+    letter-spacing:.08em;
+  }
+  .author-event b{
+    display:block;
+    margin-top:3px;
+    color:#d9d1c4;
+    font-size:8.7px;
+    line-height:1.18;
+    font-weight:600;
+  }
+  .author-event span{
+    display:block;
+    margin-top:2px;
+    color:#8f8981;
+    font-size:7.6px;
+    line-height:1.25;
+  }
+  .author-event a{
+    display:inline-block;
+    margin-top:3px;
+    color:#a9935b;
+    font-size:7px;
+    line-height:1;
+    text-decoration:none;
+  }
+  .author-event a:hover{color:#f0d185}
+
+  .trust-mini-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+  .trust-mini-grid .trust{
+    min-height:48px;
+  }
+
+  /* QUICK MILESTONES */
+  .milestone-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:11px;
+  }
+  .milestone{
+    border:1px solid rgba(217,170,67,.20);
+    border-radius:15px;padding:16px 14px;background:#081018;
+  }
+  .milestone b{
+    display:block;color:#a99f91;font-size:10px;text-transform:uppercase;letter-spacing:.07em;
+  }
+  .milestone strong{
+    display:block;margin-top:8px;color:var(--gold2);
+    font-family:Georgia,serif;font-size:27px;font-weight:500;
+  }
+  .milestone span{display:block;margin-top:3px;color:#8f8980;font-size:10px}
+
+  .scenario-box{
+    margin-top:14px;padding-top:16px;border-top:1px solid rgba(217,170,67,.13);
+  }
+  .scenario-grid{
+    display:grid;grid-template-columns:1fr 225px 220px;gap:14px;align-items:end;
+  }
+  label{
+    display:block;color:#d7b66a;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.055em;margin-bottom:7px;
+  }
+  input[type="number"],select{
+    width:100%;height:48px;
+    border:1px solid rgba(217,170,67,.27);
+    border-radius:10px;background:#091119;color:var(--text);
+    padding:0 13px;outline:none;
+  }
+  input[type="number"]:focus,select:focus{
+    border-color:rgba(241,207,122,.82);
+    box-shadow:0 0 0 3px rgba(217,170,67,.08);
+  }
+  input[type="range"]{width:100%;accent-color:var(--gold);cursor:pointer}
+  .range-scale{display:flex;justify-content:space-between;color:#817d76;font-size:9px;margin-top:2px}
+  .scenario-result{
+    height:70px;border:1px solid rgba(217,170,67,.42);border-radius:12px;
+    padding:10px 13px;background:rgba(217,170,67,.055);
+  }
+  .scenario-result span{display:block;color:#9e968c;font-size:9.5px;text-transform:uppercase}
+  .scenario-result strong{display:block;color:var(--gold2);font-family:Georgia,serif;font-size:26px;margin-top:5px}
+
+  .model-explain{
+    margin-top:12px;
+    border-top:1px solid rgba(217,170,67,.10);
+    padding-top:10px;
+  }
+  details{color:#b9b1a5}
+  summary{cursor:pointer;color:#d4b669;font-size:12px;line-height:1.4}
+  details p,details li{font-size:11.5px;line-height:1.55;color:#aaa298}
+  details ul{padding-left:18px}
+  .formula{
+    margin:9px 0;padding:10px 12px;
+    border-left:2px solid var(--gold3);
+    background:rgba(217,170,67,.045);
+    color:#c7bfb3;font-size:11px;line-height:1.5;
+  }
+
+  /* PERSONAL CALCULATOR */
+
+  .personal-section{
+    padding-top:12px;
+    padding-bottom:12px;
+  }
+  .personal-disclosure{
+    border:1px solid rgba(217,170,67,.24);
+    border-radius:15px;
+    background:linear-gradient(135deg,rgba(217,170,67,.045),rgba(5,10,15,.88));
+    overflow:hidden;
+  }
+  .personal-disclosure > summary{
+    list-style:none;
+    cursor:pointer;
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:18px;
+    align-items:center;
+    min-height:88px;
+    padding:16px 18px;
+    user-select:none;
+    transition:background .2s ease,border-color .2s ease;
+  }
+  .personal-disclosure > summary::-webkit-details-marker{display:none}
+  .personal-disclosure > summary:hover{
+    background:rgba(217,170,67,.045);
+  }
+  .personal-summary-copy .section-kicker{margin-bottom:4px}
+  .personal-summary-copy strong{
+    display:block;color:var(--gold2);font-family:Georgia,serif;
+    font-size:21px;line-height:1.15;font-weight:500;
+  }
+  .personal-summary-copy small{
+    display:block;margin-top:5px;color:#9c968d;font-size:10.5px;line-height:1.35;
+  }
+  .personal-summary-action{
+    display:flex;align-items:center;gap:10px;
+    color:#d8bd78;
+  }
+  .personal-open-label{
+    font-size:8.5px;letter-spacing:.08em;white-space:nowrap;
+  }
+  .personal-chevron{
+    width:32px;height:32px;border-radius:50%;
+    display:grid;place-items:center;
+    border:1px solid rgba(217,170,67,.32);
+    color:#f0ce78;font-size:20px;line-height:1;
+    transition:transform .25s ease,background .2s ease;
+  }
+  .personal-disclosure[open] .personal-chevron{
+    transform:rotate(45deg);
+    background:rgba(217,170,67,.08);
+  }
+  .personal-disclosure[open] .personal-open-label::after{
+    content:"";
+  }
+  .personal-body{
+    border-top:1px solid rgba(217,170,67,.14);
+    padding:18px;
+  }
+  .personal-expanded-intro{
+    margin:0 0 12px;padding:10px 12px;border-radius:10px;
+    border:1px solid rgba(217,170,67,.13);
+    background:rgba(4,10,15,.56);
+    color:#aaa298;font-size:10px;line-height:1.45;
+  }
+  @media(max-width:760px){
+    .personal-disclosure > summary{
+      grid-template-columns:1fr;
+      gap:10px;
+      min-height:auto;
+      padding:14px;
+    }
+    .personal-summary-copy strong{font-size:18px}
+    .personal-summary-action{justify-content:space-between}
+    .personal-body{padding:12px}
+  }
+
+  .personal-intro{
+    margin-bottom:16px;
+    border-left:2px solid var(--gold3);
+    padding:10px 12px;
+    background:rgba(217,170,67,.045);
+    color:#c4bcb0;font-size:12px;line-height:1.5;
+  }
+  .phase-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  }
+  .phase-card{
+    border:1px solid rgba(217,170,67,.19);
+    border-radius:15px;padding:15px;background:#081018;
+  }
+  .phase-card h3{
+    margin:0;color:#ddc57f;font-size:16px;
+  }
+  .phase-card .phase-desc{
+    min-height:34px;margin-top:4px;color:#918b82;font-size:10.5px;line-height:1.4;
+  }
+  .buy-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;
+  }
+  .qty-label{
+    color:#b9aa80;font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;
+  }
+  .qty-stepper{
+    display:grid;grid-template-columns:40px 1fr 40px;
+    height:44px;
+  }
+  .qty-stepper button{
+    border:1px solid rgba(217,170,67,.35);
+    background:linear-gradient(180deg,#151710,#0a1015);
+    color:var(--gold2);font-size:21px;cursor:pointer;
+  }
+  .qty-stepper button:hover{
+    background:rgba(217,170,67,.14);
+    border-color:rgba(241,207,122,.75);
+  }
+  .qty-stepper button:first-child{border-radius:10px 0 0 10px}
+  .qty-stepper button:last-child{border-radius:0 10px 10px 0}
+  .qty-stepper input{
+    height:44px;border-radius:0;border-left:0;border-right:0;
+    text-align:center;padding:0 5px;
+  }
+  .phase-summary{
+    margin-top:11px;padding-top:9px;border-top:1px solid rgba(217,170,67,.10);
+    color:#c7bfb2;font-size:11px;line-height:1.5;
+  }
+  .phase-summary b{color:var(--gold2)}
+  .phase-warning{
+    min-height:15px;margin-top:4px;color:var(--warn);font-size:9.5px;line-height:1.35;
+  }
+
+  .monthly-card{
+    margin-top:12px;border:1px solid rgba(102,212,255,.20);
+    border-radius:15px;padding:15px;background:rgba(7,18,26,.86);
+  }
+  .monthly-top{
+    display:flex;justify-content:space-between;gap:10px;align-items:center;
+  }
+  .monthly-top h3{margin:0;color:#c5dfeb;font-size:16px}
+  .status-pill{
+    border:1px solid rgba(217,170,67,.25);
+    border-radius:99px;padding:5px 9px;
+    color:#928b81;font-size:9.5px;text-transform:uppercase;
+  }
+  .status-pill.active{
+    border-color:rgba(169,216,142,.45);
+    color:var(--green);background:rgba(169,216,142,.06);
+  }
+  .monthly-help{margin-top:5px;color:#8e8981;font-size:10.5px;line-height:1.45}
+
+  .extras{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;
+  }
+  .extra-card{
+    border:1px solid rgba(217,170,67,.17);border-radius:13px;
+    padding:13px;background:#081018;
+  }
+  .check-row{
+    display:flex;gap:9px;align-items:flex-start;
+  }
+  .check-row input{margin-top:3px;accent-color:var(--gold)}
+  .check-row b{display:block;color:#d7bd78;font-size:11px}
+  .check-row span{display:block;margin-top:3px;color:#938d84;font-size:10px;line-height:1.4}
+  .extra-card select,.extra-card input[type="number"]{height:43px}
+
+  .wins{
+    margin-top:12px;border:1px solid rgba(217,170,67,.17);
+    border-radius:13px;padding:13px;background:#081018;
+  }
+  .wins-title{
+    color:#d7bd78;font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;
+  }
+  .wins-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px}
+  .wins label{
+    display:flex;align-items:center;gap:8px;
+    margin:0;padding:6px 0;color:#b9b1a5;font-size:10.5px;text-transform:none;letter-spacing:0;
+  }
+  .wins input{accent-color:var(--gold)}
+
+  .personal-results{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-top:15px;
+  }
+  .personal-result{
+    border:1px solid rgba(217,170,67,.22);
+    border-radius:14px;padding:14px;background:#071018;
+  }
+  .personal-result.primary{
+    grid-column:1/-1;
+    border-color:rgba(217,170,67,.48);
+    background:linear-gradient(180deg,rgba(217,170,67,.075),rgba(7,16,24,.96));
+  }
+  .personal-result .v{
+    margin-top:7px;color:var(--gold2);font-family:Georgia,serif;font-size:27px;
+  }
+  .personal-result .c{margin-top:5px;color:#928c84;font-size:10px;line-height:1.45}
+
+  .draw-list{margin-top:12px;display:grid;gap:7px}
+  .draw-row{
+    display:grid;grid-template-columns:1fr auto;gap:12px;
+    border:1px solid rgba(217,170,67,.13);
+    border-radius:11px;padding:10px 11px;background:rgba(4,10,15,.55);
+  }
+  .draw-row b{display:block;color:#d0bc83;font-size:10.5px}
+  .draw-row span{display:block;margin-top:3px;color:#8f8981;font-size:9.8px;line-height:1.4}
+  .draw-weight{
+    align-self:center;color:var(--gold2);font-family:Georgia,serif;font-size:17px;white-space:nowrap;
+  }
+  .draw-empty{color:#938d84;font-size:10.5px;line-height:1.45}
+
+  /* TRUST / RULES */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .info-box{
+    border:1px solid rgba(217,170,67,.17);
+    border-radius:14px;padding:15px;background:#081018;
+  }
+  .info-box h3{margin:0 0 8px;color:#ddc57f;font-size:16px}
+  .info-box p{margin:0;color:#a39b91;font-size:11px;line-height:1.55}
+  .info-box p+p{margin-top:8px}
+  .privacy-mark{color:var(--gold2);font-size:22px;margin-bottom:6px}
+
+  .faq details,.rules details{
+    margin:0;border-top:1px solid rgba(217,170,67,.11);
+    padding:11px 0;
+  }
+  .faq details:first-child,.rules details:first-child{border-top:0}
+  .faq details p,.rules details p{margin:8px 0 0}
+  .rules .rule-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  }
+  .rule-meta{
+    display:flex;justify-content:space-between;gap:10px;
+    border-bottom:1px solid rgba(217,170,67,.12);
+    padding-bottom:11px;margin-bottom:3px;
+    color:#8f8981;font-size:10px;
+  }
+  .deposit-box{
+    margin-top:12px;border:1px solid rgba(217,170,67,.28);
+    border-radius:13px;padding:13px;background:rgba(217,170,67,.045);
+  }
+  .deposit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .deposit-grid b{display:block;color:#9e978d;font-size:10px;text-transform:uppercase}
+  .deposit-grid strong{display:block;color:var(--gold2);font-family:Georgia,serif;font-size:25px;margin-top:5px}
+  .deposit-box p{margin:8px 0 0;color:#9a938a;font-size:10px;line-height:1.45}
+
+  .bottom-cta{
+    margin-top:18px;text-align:center;
+    border:1px solid rgba(217,170,67,.34);
+    border-radius:var(--radius);
+    padding:29px 20px;
+    background:
+      radial-gradient(circle at 50% 0%,rgba(217,170,67,.10),transparent 45%),
+      #071018;
+  }
+  .bottom-cta h2{margin:0;color:var(--gold2);font-size:29px}
+  .bottom-cta p{margin:8px auto 15px;max-width:680px;color:#a59d93;font-size:11.5px;line-height:1.5}
+  .bottom-cta .cta{max-width:650px;margin-left:auto;margin-right:auto}
+  .motto{margin-top:14px;color:#cbb470;font-family:Georgia,serif;font-size:14px}
+
+  .disclaimer{
+    margin-top:14px;
+    border-top:1px solid rgba(217,170,67,.14);
+    padding-top:13px;color:#7f7b75;font-size:9.8px;line-height:1.5;
+  }
+  .disclaimer strong{color:#aa9c79}
+
+  @media(max-width:1320px){
+    .hero{grid-template-columns:minmax(340px,43%) minmax(0,57%)}
+    .hero-content{padding-left:18px;padding-right:18px}
+    h1{font-size:40px}
+    .hero-scenario-grid{grid-template-columns:minmax(150px,1fr) 135px 140px}
+  }
+
+  @media(max-width:1100px){
+    .hero{grid-template-columns:minmax(310px,40%) minmax(0,60%)}
+    .hero-art::before{inset:-2% -25% -2% -8%}
+    h1{font-size:37px}
+    .lead{font-size:11px}
+    .hero-hook .copy{font-size:8.7px}
+    .live-card,.metric-card{padding:7px 8px}
+    .metric-label{font-size:8.5px}
+    .metric-value{font-size:17px}
+    .current-value-card .metric-value{font-size:20px}
+    .metric-note{font-size:8.7px;line-height:1.28}
+    .hero-scenario-grid{grid-template-columns:minmax(145px,1fr) 122px 126px}
+    .milestone-switch span{font-size:6.2px}
+    .scenario-explainer p{font-size:7.3px}
+    .hero-support{grid-template-columns:1fr}
+    .author-timeline{grid-template-columns:repeat(4,1fr)}
+  }
+
+  /* Smaller desktop windows and tablets reflow instead of being clipped. */
+  @media(max-width:980px){
+    .hero{
+      grid-template-columns:1fr;
+      min-height:auto;
+      overflow:hidden;
+    }
+    .hero-art{
+      min-height:320px;
+      border-bottom:1px solid rgba(217,170,67,.13);
+      overflow:hidden;
+    }
+    .hero-art::before{
+      inset:0;
+      background-position:center 36%;
+    }
+    .hero-art::after{inset:0}
+    .brand{top:24px}
+    .art-note{bottom:24px}
+    .hero-content{
+      padding:22px 18px 18px;
+      background:#05090d;
+    }
+    h1{font-size:clamp(34px,6vw,44px)}
+    .lead{font-size:14px}
+    .live-strip{grid-template-columns:1fr 1fr}
+    .current-value-card{grid-column:1/-1}
+    .hero-scenario-grid{grid-template-columns:minmax(0,1fr) 170px}
+    .hero-scenario .scenario-result{grid-column:1/-1}
+    .scenario-explainer{grid-template-columns:1fr}
+    .scenario-rule{justify-self:start}
+    .scenario-success-alert.show{grid-template-columns:1fr}
+    .author-timeline{grid-template-columns:repeat(2,1fr)}
+    .trust-mini-grid{grid-template-columns:1fr 1fr}
+  }
+
+  @media(max-width:760px){
+    .page{width:100%;padding-bottom:28px}
+    .content{width:calc(100% - 14px);margin-top:14px}
+    .section{padding:15px;border-radius:16px}
+    .section-head{display:block}
+    .milestone-grid,.phase-grid,.extras,.two-col,.rules .rule-grid,.personal-results{
+      grid-template-columns:1fr;
+    }
+    .personal-result.primary{grid-column:auto}
+    .scenario-grid{grid-template-columns:1fr}
+    .buy-grid{grid-template-columns:1fr}
+    .wins-grid{grid-template-columns:1fr}
+    .deposit-grid{grid-template-columns:1fr}
+    .hook-flow{grid-template-columns:1fr;gap:5px;text-align:center}
+    .hook-arrow{transform:rotate(90deg);font-size:21px}
+    .hook-result{grid-template-columns:1fr}
+
+    .hero-art{min-height:280px}
+    .hero-content{padding:18px 12px 16px}
+    h1{font-size:34px}
+    .lead{font-size:13.5px;line-height:1.4}
+
+    .hero-hook{
+      grid-template-columns:auto 18px 1fr;
+      padding:8px;
+    }
+    .hero-hook .copy{font-size:9.5px}
+
+    .live-strip{grid-template-columns:1fr}
+    .current-value-card{grid-column:auto}
+
+    .hero-content > #joinProject{
+      grid-template-columns:1fr;
+      gap:2px;
+      padding:9px 10px;
+    }
+    .hero-content > #joinProject strong{
+      white-space:normal;
+      text-align:center;
+    }
+    .hero-content > #joinProject small{text-align:center}
+
+    .hero-scenario{
+      padding:10px 9px;
+      border-radius:12px;
+      overflow:hidden;
+    }
+    .scenario-topline{
+      align-items:flex-start;
+      flex-direction:column;
+      gap:5px;
+    }
+    .scenario-split{
+      text-align:left;
+      font-size:9px;
+    }
+
+    /* Mobile: all phase buttons remain visible; no sideways phase scroller. */
+    .milestone-switches{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:6px;
+      overflow:visible;
+      padding:0;
+      margin-bottom:10px;
+    }
+    .milestone-switch{
+      min-height:44px;
+      padding:6px 4px;
+      touch-action:manipulation;
+    }
+    .milestone-switch span{font-size:7px}
+    .milestone-switch b{font-size:12px}
+
+    .hero-scenario-grid{
+      grid-template-columns:1fr;
+      gap:8px;
+    }
+    .hero-scenario label{
+      display:block;
+      font-size:9px;
+      line-height:1.3;
+    }
+
+    /* Large touch target; the visual track itself remains compact. */
+    #salesRange{
+      width:calc(100% - 18px);
+      max-width:calc(100% - 18px);
+      height:44px;
+      min-height:44px;
+      margin-left:9px;
+      margin-right:9px;
+    }
+    #salesRange::-webkit-slider-runnable-track{height:10px}
+    #salesRange::-webkit-slider-thumb{
+      width:28px;
+      height:28px;
+      margin-top:-10px;
+    }
+    #salesRange::-moz-range-track{height:10px}
+    #salesRange::-moz-range-thumb{
+      width:24px;
+      height:24px;
+    }
+
+    /* On mobile the phase buttons already explain the middle milestones.
+       Keep only the useful axis anchors under the slider. */
+    .hero-scenario .range-scale{
+      grid-template-columns:repeat(4,1fr);
+      font-size:7.5px;
+      margin-top:0;
+    }
+    .hero-scenario .range-scale span{display:none}
+    .hero-scenario .range-scale span:nth-child(1),
+    .hero-scenario .range-scale span:nth-child(5),
+    .hero-scenario .range-scale span:nth-child(6),
+    .hero-scenario .range-scale span:nth-child(7){
+      display:block;
+    }
+    .hero-scenario .range-scale span:nth-child(5),
+    .hero-scenario .range-scale span:nth-child(6){text-align:center}
+    .hero-scenario .range-scale span:nth-child(7){text-align:right}
+
+    #salesExact{
+      height:44px;
+      min-height:44px;
+      font-size:16px !important;
+    }
+    .hero-scenario .scenario-result{
+      grid-column:auto;
+      height:auto;
+      min-height:58px;
+      padding:8px 10px;
+    }
+    .hero-scenario .scenario-result span{font-size:9px}
+    .hero-scenario .scenario-result strong{
+      font-size:20px;
+      white-space:normal;
+      overflow-wrap:anywhere;
+    }
+
+    .scenario-explainer{
+      grid-template-columns:1fr;
+      gap:7px;
+      padding:8px;
+    }
+    .scenario-explainer strong{font-size:10px}
+    .scenario-explainer p{font-size:9px;line-height:1.4}
+    .scenario-rule{
+      justify-self:start;
+      min-width:0;
+      max-width:100%;
+      white-space:normal;
+    }
+    .scenario-success-alert.show{
+      grid-template-columns:1fr;
+      gap:5px;
+    }
+    .scenario-success-alert b{white-space:normal}
+    .scenario-success-alert span{font-size:9px}
+
+    .installment-head{display:block}
+    .installment-head span{display:block;text-align:left;margin-top:3px}
+
+    .author-medallion-head{
+      align-items:flex-start;
+      flex-direction:column;
+      gap:5px;
+    }
+    .author-medallion-badge{white-space:normal}
+    .author-timeline{grid-template-columns:1fr 1fr}
+    .author-event{padding:7px 8px}
+    .author-event b{font-size:9.2px}
+    .author-event span{font-size:8px}
+    .trust-mini-grid{grid-template-columns:1fr}
+  }
+
+  @media(max-width:480px){
+    .hero-art{min-height:245px}
+    .brand{left:16px;top:16px;font-size:23px}
+    .art-note{
+      left:16px;
+      bottom:16px;
+      width:calc(100% - 32px);
+      padding:10px 11px;
+    }
+    .art-note b{font-size:16px}
+    .art-note span{font-size:9.5px}
+
+    .hero-content{padding:16px 10px 14px}
+    h1{font-size:30px}
+    .lead{font-size:12.5px}
+    .hero-hook{grid-template-columns:1fr;text-align:center}
+    .hero-hook .arrow{transform:rotate(90deg)}
+    .hero-hook .copy{font-size:9.5px}
+
+    .milestone-switches{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .milestone-switch{min-height:46px}
+
+    .author-timeline{grid-template-columns:1fr}
+    .author-medallion h3{font-size:14px}
+
+    .personal-disclosure > summary{
+      grid-template-columns:1fr;
+      gap:10px;
+      min-height:auto;
+      padding:14px;
+    }
+    .personal-summary-copy strong{font-size:18px}
+    .personal-summary-action{justify-content:space-between}
+    .personal-body{padding:12px}
+
+    .section-head h2{font-size:22px}
+    .bottom-cta{padding:22px 12px}
+    .bottom-cta h2{font-size:24px}
+  }
+
+  /* Short desktop windows: compact vertically but leave widths alone. */
+  @media(min-width:981px) and (max-height:900px){
+    .hero{min-height:500px}
+    .hero-art{min-height:500px}
+    .hero-content{padding-top:30px;padding-bottom:9px}
+    h1{font-size:36px}
+    .lead{margin:4px 0 6px;font-size:10.5px}
+    .hero-hook{margin-bottom:5px;padding:5px 7px}
+    .progress{margin:5px 0 6px}
+    .hero-scenario{margin:4px 0 5px}
+    .cta{padding:8px 13px}
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      scroll-behavior:auto !important;
+      animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
+    }
+  }
+.milestone-highlight{border-color:rgba(241,207,122,.46);box-shadow:0 0 22px rgba(217,170,67,.06)}
+.section-kicker-spaced{margin-top:17px}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <section class="hero">
+    <aside class="hero-art" id="art">
+      <div class="brand">STERON</div>
+      <div class="tap-ring"></div>
+      <div class="art-note">
+        <b>ČO AK?</b>
+        <span>Najprv si pozri aktuálny stav a modelové míľniky. Až potom, ak chceš, si nižšie vyskladaj svoju osobnú dotačnú pozíciu.</span>
+      </div>
+    </aside>
+
+    <main class="hero-content">
+<h1>DOTAČNÁ KALKULAČKA</h1>
+      <div class="lead">Aktuálny stav projektu, modelová hodnota dotačnej jednotky a osobná kalkulačka všetkých tvojich vstupov, odmien a žrebovacích váh.</div>
+
+      <div class="hero-hook">
+        <div class="price">169 €</div>
+        <div class="arrow">→</div>
+        <div class="copy">
+          <b>Jeden vstup do projektu.</b> Podľa aktuálnej fázy získaš jednotky alebo šancu na ne.
+          Pri 1M vstupov ≈ 500 € / jednotka, pri 10M ≈ 5 000 €, pri 100M ≈ 50 000 €.
+        </div>
+      </div>
+
+      <div class="live-strip" aria-live="polite">
+        <div class="live-card">
+          <div class="metric-label">Aktuálna fáza</div>
+          <div class="metric-value" id="livePhase">FÁZA I</div>
+          <div class="metric-note"><span id="liveSold">0</span> predaných vstupov</div>
+        </div>
+        <div class="live-card">
+          <div class="metric-label">Do ďalšej fázy</div>
+          <div class="metric-value" id="liveRemaining">200</div>
+          <div class="metric-note" id="livePhaseRule">10 jednotiek za každý vstup</div>
+        </div>
+        <div class="live-card current-value-card">
+          <div class="metric-label">Aktuálna odhadovaná hodnota 1 dotačnej jednotky</div>
+          <div class="metric-value" id="liveUnitValue">0 €</div>
+          <div class="metric-note" id="liveUnitNote">Modelová hodnota začne rásť po dosiahnutí 1 000 000 vstupov.</div>
+        </div>
+      </div>
+
+      <div class="progress"><span id="liveProgressBar"></span></div>
+
+      <a class="cta" id="joinProject" href="https://www.martin-matuska.com/blank" target="_blank" rel="noopener">
+        <strong id="joinTitle">VSTÚPIŤ DO 1. FÁZY</strong>
+        <small id="joinSubtitle">Aktuálne: 10 dotačných jednotiek za každý oprávnený vstup</small>
+      </a>
+
+
+      <div class="hero-scenario" id="heroScenario">
+        <div class="scenario-topline">
+          <div>
+            <span class="scenario-kicker">INTERAKTÍVNA MAPA PROJEKTU</span>
+            <strong id="scenarioPhaseBadge">PLNÝ ÚSPECH PROJEKTU</strong>
+          </div>
+          <div class="scenario-split" id="scenarioSplit">75 % čistého zisku · 150 000 dotačných jednotiek</div>
+        </div>
+
+        <div class="milestone-switches" id="milestoneSwitches" aria-label="Míľniky projektu">
+          <button type="button" class="milestone-switch" data-live="1">
+            <span>TERAZ</span><b id="milestoneNow">82</b>
+          </button>
+          <button type="button" class="milestone-switch" data-sales="200">
+            <span>FÁZA II</span><b>200</b>
+          </button>
+          <button type="button" class="milestone-switch" data-sales="3000">
+            <span>FÁZA III</span><b>3K</b>
+          </button>
+          <button type="button" class="milestone-switch" data-sales="100000">
+            <span>FÁZA IV</span><b>100K</b>
+          </button>
+          <button type="button" class="milestone-switch major" data-sales="1000000">
+            <span>ODPOČET</span><b>1M</b>
+          </button>
+          <button type="button" class="milestone-switch success" data-sales="100000000">
+            <span>PLNÝ ÚSPECH</span><b>100M</b>
+          </button>
+          <button type="button" class="milestone-switch" data-sales="1000000000">
+            <span>SCENÁR</span><b>1B</b>
+          </button>
+        </div>
+
+        <div class="hero-scenario-grid">
+          <div class="range-column">
+            <label for="salesRange">Posúvaj projekt od začiatku po plný úspech a ďalej</label>
+            <input id="salesRange" type="range" min="0" max="100" step="0.1" value="87">
+            <div class="range-scale">
+              <span id="scenarioMinLabel">TERAZ</span><span>200</span><span>3K</span><span>100K</span><span>1M</span><span>100M</span><span>1B</span>
+            </div>
+          </div>
+          <div>
+            <label for="salesExact">Vlastný odhad predaja</label>
+            <input id="salesExact" type="number" min="1" step="1" value="100000000" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="scenario-result">
+            <span>Odhad 1 dotačnej jednotky</span>
+            <strong id="scenarioUnitValue">50 000 €</strong>
+          </div>
+        </div>
+
+        <div class="scenario-explainer">
+          <div>
+            <strong id="scenarioPhaseTitle">100 000 000 vstupov · plný úspech projektu</strong>
+            <p id="scenarioPhaseText">Od tohto míľnika sa model mení: medzi 150 000 dotačných jednotiek sa delí 75 % čistého zisku projektu.</p>
+          </div>
+          <div class="scenario-rule" id="scenarioRule">75 % / 150 000</div>
+        </div>
+
+        <div class="scenario-success-alert" id="scenarioSuccessAlert" aria-live="polite">
+          <b>PLNÝ ÚSPECH PROJEKTU</b>
+          <span>Od 100 miliónov vstupov sa namiesto 50 % / 100 000 jednotiek delí <strong>75 % čistého zisku projektu medzi 150 000 dotačných jednotiek.</strong></span>
+        </div>
+      </div>
+
+
+</main>
+  </section>
+  <div class="hero-support">
+      <div class="installment-strip">
+        <div class="installment-head">
+          <b>POSTUPNÁ ÚHRADA / SPLÁTKY · AK SÚ AKTUÁLNE DOSTUPNÉ</b>
+          <span id="installmentDeadlineText">Pred spustením odpočtu sú dostupné všetky ponúkané dĺžky.</span>
+        </div>
+        <div class="installment-options" id="installmentOptions"></div>
+        <div class="installment-note">
+          Fáza projektu sa pri splátkach určí podľa momentu úspešného uhradenia poslednej splátky, nie podľa dátumu prvej splátky.
+        </div>
+        <a class="installment-link" href="https://www.martin-matuska.com/pricing-plans/list" target="_blank" rel="noopener">
+          ZOBRAZIŤ AKTUÁLNE MOŽNOSTI SPLÁTOK
+        </a>
+      </div>
+
+      <div class="credibility-column">
+        <div class="author-medallion">
+          <div class="author-medallion-head">
+            <div>
+              <div class="author-medallion-kicker">AUTOR · MARTIN MATUŠKA</div>
+              <h3>Viac než 25 rokov v slovenskej fantastike</h3>
+            </div>
+            <div class="author-medallion-badge">PUBLIKÁCIE · SÚŤAŽE · EUROCON</div>
+          </div>
+
+          <div class="author-timeline">
+            <div class="author-event">
+              <div class="author-event-year">2000</div>
+              <b>Fantázia 13</b>
+              <span><i>Vrátnik</i> · prvá publikovaná próza<br>preklad Myry Çakan · <i>Studené svetlo hviezd</i></span>
+              <a href="https://www.legie.info/kniha/5552-fantazia-13" target="_blank" rel="noopener">Fantázia 13 ↗</a>
+            </div>
+
+            <div class="author-event">
+              <div class="author-event-year">2001</div>
+              <b>3. miesto · Cena Karla Čapka</b>
+              <span><i>Nautilus</i> · kategória román a novela</span>
+              <a href="https://ikarie.vecnost.cz/texty/ckc2001r.html" target="_blank" rel="noopener">výsledky ↗</a>
+            </div>
+
+            <div class="author-event">
+              <div class="author-event-year">2001</div>
+              <b>Finalista · Cena Gustáva Reussa</b>
+              <span><i>Konina</i> · publikovaná v Krutohlave 2001</span>
+              <a href="https://interkom.vecnost.cz/2002/20020172.htm" target="_blank" rel="noopener">výsledky ↗</a>
+            </div>
+
+            <div class="author-event">
+              <div class="author-event-year">2005</div>
+              <b>Eurocon · Encouragement Award</b>
+              <span>European Science Fiction Society · Glasgow</span>
+              <a href="https://www.esfs.info/esfs-awards/2000-2009/" target="_blank" rel="noopener">ESFS ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="trust-mini-grid">
+          <div class="trust">
+            <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M12 3 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-3Z"></path>
+              <path d="m8.8 12 2 2 4.5-5"></path>
+            </svg>
+            <div>
+              <b>ZABEZPEČENÁ PLATBA KARTOU</b>
+              <span>Platby kartou prebiehajú prostredníctvom zabezpečenej platobnej brány.</span>
+            </div>
+          </div>
+
+          <div class="trust">
+            <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M12 4c5.2 0 8.5 4.8 9.3 6.3a3.4 3.4 0 0 1 0 3.4C20.5 15.2 17.2 20 12 20S3.5 15.2 2.7 13.7a3.4 3.4 0 0 1 0-3.4C3.5 8.8 6.8 4 12 4Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="m4 20 16-16"></path>
+            </svg>
+            <div>
+              <b>SÚKROMIE PODPOROVATEĽOV</b>
+              <span>Menný zoznam kupujúcich ani držiteľov dotačných jednotiek sa verejne nezverejňuje.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+  </div>
+
+
+  <div class="content">
+
+    <section class="section" id="quickModel">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">MODELOVÉ MÍĽNIKY</div>
+          <h2>Kam sa môže modelová hodnota 1 dotačnej jednotky posúvať?</h2>
+          <p>Rýchly prehľad hlavných scenárov. Vlastný slider a výsledok sú už hore, aby boli dostupné bez scrollovania.</p>
+        </div>
+      </div>
+
+      <div class="milestone-grid">
+        <div class="milestone">
+          <b>1 milión vstupov</b>
+          <strong>≈ 500 €</strong>
+          <span>modelová hodnota 1 dotačnej jednotky</span>
+        </div>
+        <div class="milestone">
+          <b>10 miliónov vstupov</b>
+          <strong>≈ 5 000 €</strong>
+          <span>modelová hodnota 1 dotačnej jednotky</span>
+        </div>
+        <div class="milestone milestone-highlight">
+          <b>100 miliónov · PLNÝ ÚSPECH</b>
+          <strong>≈ 50 000 €</strong>
+          <span>75 % čistého zisku / 150 000 dotačných jednotiek</span>
+        </div>
+        <div class="milestone">
+          <b>1 miliarda vstupov</b>
+          <strong>≈ 500 000 €</strong>
+          <span>modelová hodnota 1 dotačnej jednotky</span>
+        </div>
+      </div>
+
+      <div class="model-explain">
+        <details>
+          <summary>Ako kalkulačka počíta odhad?</summary>
+          <p>Kalkulačka používa pevný modelový predpoklad: po odpočítaní nákladov projektu a príslušných daní zostane v priemere 100 € čistého zisku projektu na jeden oprávnený vstup.</p>
+          <div class="formula">
+            Pod 100 miliónov vstupov: <b>50 % čistého zisku projektu / 100 000 dotačných jednotiek.</b><br>
+            Od 100 miliónov vstupov: <b>75 % čistého zisku projektu / 150 000 dotačných jednotiek.</b>
+          </div>
+          <p>Osobné životné náklady autora sa nepovažujú za náklady projektu a neznižujú základ určený na tento modelový výpočet. Skutočný čistý zisk na jeden vstup môže byť vyšší alebo nižší, preto sú výsledky iba odhadom.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="section personal-section" id="personalCalculator">
+      <details class="personal-disclosure" id="personalDisclosure">
+        <summary>
+          <div class="personal-summary-copy">
+            <span class="section-kicker">OSOBNÁ KALKULAČKA</span>
+            <strong>Už si súčasťou projektu? Vypočítaj si svoju pozíciu.</strong>
+            <small>Tvoje vstupy, dotačné jednotky, žrebovacie váhy a modelová hodnota na jednom mieste.</small>
+          </div>
+          <div class="personal-summary-action">
+            <span class="personal-open-label">OTVORIŤ KALKULAČKU</span>
+            <span class="personal-chevron" aria-hidden="true">＋</span>
+          </div>
+        </summary>
+
+        <div class="personal-body">
+          <div class="personal-expanded-intro">
+            Zadaj tlačené knihy a e-booky samostatne. E-book-only vstup za 169 € má pri náhodných výberoch dvojnásobnú žrebovaciu váhu. Bankový prevod žrebovaciu váhu nemení.
+          </div>
+
+      <div class="personal-intro">
+        Jednotky z rôznych fáz a programov sa sčítavajú, pokiaľ konkrétny program neurčuje inak. Budúca možná výhra sa nepripočíta medzi tvoje jednotky, kým ju skutočne nezískaš.
+      </div>
+
+      <div class="phase-grid">
+
+        <article class="phase-card">
+          <h3>Fáza I · prvých 200 vstupov</h3>
+          <div class="phase-desc">10 dotačných jednotiek za každý vstup. Maximálne 10 vstupov spolu na jedno meno v tejto fáze.</div>
+          <div class="buy-grid">
+            <div>
+              <div class="qty-label">Tlačené knihy · váha 1×</div>
+              <div class="qty-stepper">
+                <button type="button" data-input="f1Print" data-delta="-1" aria-label="Znížiť počet tlačených kníh vo fáze I">−</button>
+                <input id="f1Print" type="number" min="0" max="10" step="1" value="0">
+                <button type="button" data-input="f1Print" data-delta="1" aria-label="Zvýšiť počet tlačených kníh vo fáze I">+</button>
+              </div>
+            </div>
+            <div>
+              <div class="qty-label">E-booky 169 € · váha 2×</div>
+              <div class="qty-stepper">
+                <button type="button" data-input="f1Ebook" data-delta="-1" aria-label="Znížiť počet e-bookov vo fáze I">−</button>
+                <input id="f1Ebook" type="number" min="0" max="10" step="1" value="0">
+                <button type="button" data-input="f1Ebook" data-delta="1" aria-label="Zvýšiť počet e-bookov vo fáze I">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="phase-summary" id="f1Summary">0 vstupov · <b>0 jednotiek</b> · žrebovacia váha 0×</div>
+          <div class="phase-warning" id="f1Warning"></div>
+        </article>
+
+        <article class="phase-card">
+          <h3>Fáza II · do 3 000 vstupov</h3>
+          <div class="phase-desc">Aspoň jeden vstup v tejto fáze = 1 dotačná jednotka. Maximálne 1 jednotka na meno v tejto fáze.</div>
+          <div class="buy-grid">
+            <div>
+              <div class="qty-label">Tlačené knihy · váha 1×</div>
+              <div class="qty-stepper">
+                <button type="button" data-input="f2Print" data-delta="-1">−</button>
+                <input id="f2Print" type="number" min="0" step="1" value="0">
+                <button type="button" data-input="f2Print" data-delta="1">+</button>
+              </div>
+            </div>
+            <div>
+              <div class="qty-label">E-booky 169 € · váha 2×</div>
+              <div class="qty-stepper">
+                <button type="button" data-input="f2Ebook" data-delta="-1">−</button>
+                <input id="f2Ebook" type="number" min="0" step="1" value="0">
+                <button type="button" data-input="f2Ebook" data-delta="1">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="phase-summary" id="f2Summary">0 vstupov · <b>0 jednotiek</b> · žrebovacia váha 0×</div>
+          <div class="phase-warning"></div>
+        </article>
+
+        <article class="phase-card">
+          <h3>Fáza III · do 100 000 vstupov</h3>
+          <div class="phase-desc">1 jednotka na každých 5 vstupov sa prideľuje transparentným náhodným mechanizmom. 5 vstupov na jedno meno = garantovaná 1 jednotka; max. 1 v tejto fáze.</div>
+          <div class="buy-grid">
+            <div>
+              <div class="qty-label">Tlačené knihy · váha 1×</div>
+              <div class="qty-stepper">
+                <button type="button" data-input="f3Print" data-delta="-1">−</button>
+                <input id="f3Print" type="number" min="0" step="1" value="0">
+                <button type="button" data-input="f3Print" data-delta="1">+</button>
+              </div>
+            </div>
+            <div>
+              <div class="qty-label">E-booky 169 € · váha 2×</div>
+              <div class="qty-stepper">
+                <button type="button" data-input="f3Ebook" data-delta="-1">−</button>
+                <input id="f3Ebook" type="number" min="0" step="1" value="0">
+                <button type="button" data-input="f3Ebook" data-delta="1">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="phase-summary" id="f3Summary">0 vstupov · <b>0 garantovaných jednotiek</b> · žrebovacia váha 0×</div>
+          <div class="phase-warning" id="f3Warning"></div>
+        </article>
+
+        <article class="phase-card">
+          <h3>Fáza IV · do 1 000 000 vstupov</h3>
+          <div class="phase-desc">1 jednotka na každých 50 vstupov sa prideľuje transparentným náhodným mechanizmom. 50 vstupov na jedno meno = garantovaná 1 jednotka; max. 1 v tejto fáze.</div>
+          <div class="buy-grid">
+            <div>
+              <div class="qty-label">Tlačené knihy · váha 1×</div>
+              <div class="qty-stepper">
+                <button type="button" data-input="f4Print" data-delta="-1">−</button>
+                <input id="f4Print" type="number" min="0" step="1" value="0">
+                <button type="button" data-input="f4Print" data-delta="1">+</button>
+              </div>
+            </div>
+            <div>
+              <div class="qty-label">E-booky 169 € · váha 2×</div>
+              <div class="qty-stepper">
+                <button type="button" data-input="f4Ebook" data-delta="-1">−</button>
+                <input id="f4Ebook" type="number" min="0" step="1" value="0">
+                <button type="button" data-input="f4Ebook" data-delta="1">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="phase-summary" id="f4Summary">0 vstupov · <b>0 garantovaných jednotiek</b> · žrebovacia váha 0×</div>
+          <div class="phase-warning" id="f4Warning"></div>
+        </article>
+
+      </div>
+
+      <article class="monthly-card">
+        <div class="monthly-top">
+          <h3>Vstupy počas aktuálneho mesiaca 365-dňového odpočtu</h3>
+          <div class="status-pill" id="monthlyStatus">NEAKTÍVNY</div>
+        </div>
+        <div class="monthly-help">Mesačný výber sa aktivuje automaticky až po zadaní aspoň jedného oprávneného vstupu kúpeného v príslušnom mesiaci po dosiahnutí 1 milióna. Nie je možné ho zapnúť bez nákupu.</div>
+        <div class="buy-grid">
+          <div>
+            <div class="qty-label">Tlačené knihy · váha 1×</div>
+            <div class="qty-stepper">
+              <button type="button" data-input="postPrint" data-delta="-1">−</button>
+              <input id="postPrint" type="number" min="0" step="1" value="0">
+              <button type="button" data-input="postPrint" data-delta="1">+</button>
+            </div>
+          </div>
+          <div>
+            <div class="qty-label">E-booky 169 € · váha 2×</div>
+            <div class="qty-stepper">
+              <button type="button" data-input="postEbook" data-delta="-1">−</button>
+              <input id="postEbook" type="number" min="0" step="1" value="0">
+              <button type="button" data-input="postEbook" data-delta="1">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="phase-summary" id="postSummary">0 vstupov · mesačný výber nie je aktívny</div>
+      </article>
+
+      <div class="extras">
+        <div class="extra-card">
+          <div class="check-row">
+            <input id="reviewUnit" type="checkbox">
+            <div><b>Mám potvrdenú jednotku za recenziu</b><span>+1 jednotka z recenzného poolu.</span></div>
+          </div>
+        </div>
+
+        <div class="extra-card">
+          <label for="guarantorType">Potvrdený garant dôvery</label>
+          <select id="guarantorType">
+            <option value="0">Nie som garant</option>
+            <option value="1">Nový garant dôvery · +1 potvrdená jednotka</option>
+            <option value="5">Doterajší individuálny prísľub · +5 jednotiek</option>
+            <option value="20">Doterajší individuálny prísľub · +20 jednotiek</option>
+          </select>
+        </div>
+
+        <div class="extra-card">
+          <label for="influencerUnits">Individuálne potvrdené influencer jednotky</label>
+          <input id="influencerUnits" type="number" min="0" max="5000" step="1" value="0">
+          <div class="phase-warning">Zadaj iba počet, ktorý ti bol potvrdený v rámci influencer poolu.</div>
+        </div>
+
+        <div class="extra-card">
+          <label for="otherUnits">Iné individuálne potvrdené jednotky</label>
+          <input id="otherUnits" type="number" min="0" max="100000" step="1" value="0">
+          <div class="phase-warning">Napr. za vopred potvrdenú tvorbu, pomoc alebo inú aktivitu.</div>
+        </div>
+      </div>
+
+      <div class="wins">
+        <div class="wins-title">Už získané jednotky z ukončených náhodných výberov</div>
+        <div class="wins-grid">
+          <label><input id="wonMonthly" type="checkbox"> Mesačný výber po 1M · <b>+1</b></label>
+          <label><input id="wonFirst100k" type="checkbox"> Výber 100 × 10 z prvých 100k · <b>+10</b></label>
+          <label><input id="wonFirst1m" type="checkbox"> Veľký výber z prvého 1M · <b>+1 000</b></label>
+          <label><input id="wonAllBuyers" type="checkbox"> Výber zo všetkých kupujúcich pri plnom úspechu · <b>+1 000</b></label>
+        </div>
+      </div>
+
+      <div class="personal-results" aria-live="polite">
+        <div class="personal-result">
+          <div class="metric-label">Isté / už pridelené jednotky</div>
+          <div class="v" id="guaranteedUnits">0</div>
+          <div class="c" id="guaranteedCaption">Zatiaľ nemáš zadanú garantovanú ani už získanú jednotku.</div>
+        </div>
+
+        <div class="personal-result">
+          <div class="metric-label">Žrebovacia váha všetkých zadaných vstupov</div>
+          <div class="v" id="overallWeight">0×</div>
+          <div class="c">Jednotlivé výbery používajú iba vstupy z obdobia, ktoré do nich patrí.</div>
+        </div>
+
+        <div class="personal-result">
+          <div class="metric-label">Modelová hodnota 1 dotačnej jednotky v zvolenom scenári</div>
+          <div class="v" id="personalUnitValue">500 €</div>
+          <div class="c">Používa sa scenár nastavený vyššie na stránke.</div>
+        </div>
+
+        <div class="personal-result primary">
+          <div class="metric-label">Hypotetická hodnota tvojich istých / už pridelených jednotiek</div>
+          <div class="v" id="personalValue">0 €</div>
+          <div class="c" id="personalValueCaption">Budúce možné výhry sa sem nepripočítavajú. Ide o modelový scenár, nie garantovanú sumu.</div>
+        </div>
+      </div>
+
+      <div class="section-kicker section-kicker-spaced">MOŽNÉ BUDÚCE VÝHRY A VÁHY</div>
+      <div class="draw-list" id="drawList">
+        <div class="draw-empty">Po zadaní vstupov sa tu zobrazia náhodné programy, do ktorých tvoja pozícia patrí, spolu s príslušnou žrebovacou váhou.</div>
+      </div>
+    
+        </div>
+      </details>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">TRANSPARENTNOSŤ</div>
+          <h2>Kontrolovateľný model bez verejného menného zoznamu</h2>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="info-box">
+          <div class="privacy-mark">◇</div>
+          <h3>Transparentnosť výberov</h3>
+          <p>Pravidlá jednotlivých programov, počet vyčlenených jednotiek a mechanika náhodných výberov majú byť verejne popísané tak, aby bolo možné výsledok spätne kontrolovať.</p>
+        </div>
+        <div class="info-box">
+          <div class="privacy-mark">◈</div>
+          <h3>Súkromie podporovateľov</h3>
+          <p>Menný zoznam kupujúcich ani držiteľov dotačných jednotiek nebude verejne zverejňovaný. Verejne sa majú používať iba potrebné súhrnné alebo anonymizované údaje; osobitné zverejnenie výhercu sa riadi pravidlami konkrétneho výberu a vopred oznámenými podmienkami.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section faq">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">FAQ</div>
+          <h2>Najčastejšie otázky</h2>
+        </div>
+      </div>
+
+      <details>
+        <summary>Čo sa zmenilo v podmienkach garantstva?</summary><p>Od 13. októbra 2026 ide o garantov dôvery bez povinného nákupu a osobnej známosti s autorom. Novému schválenému garantovi môže byť evidovaná jedna podmienená jednotka alebo môže podporiť projekt bez nej. Limit je 500 nových schválení navyše k doterajším garantom. Ich staršie individuálne prísľuby zostávajú pri úspechu zachované. <a href="https://www.martin-matuska.com/about-1" target="_top">Prečítať aktuálne podmienky ↗</a></p></details><details><summary>Prečo je aktuálna odhadovaná hodnota do 1 milióna vstupov 0 €?</summary>
+        <p>Pretože táto kalkulačka začne zobrazovať priebežnú modelovú finančnú hodnotu dotačnej jednotky až po dosiahnutí prvého veľkého cieľa – 1 000 000 predaných vstupov. Ani potom nejde o garantovanú sumu, ale o odhad podľa aktuálneho modelu.</p>
+      </details>
+      <details>
+        <summary>Ako funguje dvojnásobná žrebovacia váha e-booku za 169 €?</summary>
+        <p>Každý štandardný oprávnený vstup má váhu 1×. Každý e-book-only vstup za 169 € má váhu 2×. Váhy jednotlivých vstupov jednej osoby sa sčítavajú. Napríklad 1 tlačená kniha + 4 e-booky znamenajú žrebovaciu váhu 9× v príslušnom výbere. Dvojnásobná váha nezdvojnásobuje počet garantovaných dotačných jednotiek.</p>
+      </details>
+      <details>
+        <summary>Zvyšuje platba bankovým prevodom žrebovaciu váhu?</summary>
+        <p>Nie. Spôsob platby žrebovaciu váhu nemení. Bonusová dvojnásobná váha zostáva viazaná na komunikovaný e-book-only vstup za 169 €.</p>
+      </details>
+      <details>
+        <summary>Ak si rozdelím 169 € na splátky, v ktorej fáze projektu budem evidovaný?</summary>
+        <p>Pri splátkach vznikne dokončený vstup do projektu až úspešným uhradením celej ceny 169 €. Pre dotačné pravidlá sa preto použije fáza, v ktorej sa projekt nachádza v okamihu pripísania poslednej úspešnej splátky. Začatie splácania v skoršej fáze túto fázu nerezervuje.</p>
+      </details>
+      <details>
+        <summary>Prečo sa počas 365-dňového odpočtu skracujú možnosti splátok?</summary>
+        <p>Splátkový plán musí byť možné dokončiť pred skončením 365-dňového odpočtu. Po jeho spustení preto 12-mesačná možnosť prestane byť ponúkaná. Keď zostáva približne 6 mesiacov, prestane byť ponúkaná 6-mesačná možnosť; pri približne 3 mesiacoch sa odstráni 3-mesačná možnosť a pri približne 2 mesiacoch aj 2-mesačná možnosť. Ak už žiadna ponúkaná splátková dĺžka bezpečne nezmestí všetky platby pred deadline, zostáva jednorazová úhrada.</p>
+      </details>
+      <details>
+        <summary>Čo ak splátkový plán nedokončím alebo posledná platba zlyhá?</summary>
+        <p>Kým nie je uhradených celých 169 €, nevzniká dokončený vstup do projektu ani dotačný nárok viazaný na tento vstup a tlačená kniha sa štandardne odosiela až po úplnom zaplatení. Už uhradené čiastky sa vysporiadajú podľa obchodných podmienok a povinných práv spotrebiteľa; neúspešné dokončenie splátok sa automaticky nepovažuje za vzdanie sa zákonných práv.</p>
+        <p>Ako dobrovoľný ústretový benefit projektu: ak bolo uhradených aspoň 56,34 € (jedna tretina ceny 169 €), podporovateľ môže požiadať o zaslanie jednej tlačenej knihy, ak je dostupná; pri doprave mimo bežných podmienok môže byť potrebné doplatiť dopravu. Zaslanie knihy v takom prípade samo osebe nevytvára dokončený vstup ani dotačný nárok.</p>
+      </details>
+
+      <details>
+        <summary>Čo sa stane pri storne alebo refundácii objednávky?</summary>
+        <p>Pri stornovaní, platnej refundácii alebo neúspešnom dokončení celej platby nevzniká alebo zaniká dotačný nárok spojený s daným vstupom a nedokončený vstup sa nezapočítava do centrálneho počítadla projektu. Pri splátkach sa za dokončený vstup považuje až plne uhradených 169 €.</p>
+      </details>
+      <details>
+        <summary>Môžem získavať jednotky vo viacerých fázach a programoch?</summary>
+        <p>Áno. Limity sa posudzujú samostatne v každej fáze alebo programe, ak konkrétne pravidlo neurčuje inak. Skorý podporovateľ tak môže kumulovať jednotky z viacerých fáz, recenzného programu, garantstva alebo neskorších výberov.</p>
+      </details>
+    </section>
+
+    <section class="section rules" id="rulesSection">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">REFERENČNÁ ČASŤ</div>
+          <h2>Kompletné pravidlá delenia dotačných jednotiek</h2>
+          <p>Pravidlá sú zámerne zbalené. Rozklikni iba časť, ktorú potrebuješ.</p>
+        </div>
+      </div>
+
+      <div class="rule-meta">
+        <span>STERON · pravidlá dotačného modelu</span>
+        <span>verzia 2.6 · 13. 10. 2026</span>
+      </div>
+
+      <details>
+        <summary>1. Čo je „vstup do projektu“ a čo je dotačná jednotka?</summary>
+        <p>Vstup do projektu je oprávnená kúpa produktu STERON za podmienok príslušnej fázy, ktorá sa započítava do centrálneho počítadla projektu. Dotačná jednotka je evidovaná jednotka dotačného modelu. Sama osebe nie je okamžitou finančnou pohľadávkou ani garantovaným výnosom.</p>
+      </details>
+
+      <details>
+        <summary>2. Hlavný cieľ, 365-dňový odpočet a delenie čistého zisku projektu</summary>
+        <p>Dosiahnutie 1 000 000 predaných vstupov spúšťa 365-dňový odpočet, počas ktorého sa projekt ďalej predáva. Ak konečný výsledok zostane pod 100 miliónmi vstupov, model počíta s rozdelením 50 % čistého zisku projektu medzi 100 000 dotačných jednotiek. Pri 100 miliónoch vstupov a viac model počíta so 75 % čistého zisku projektu a 150 000 dotačnými jednotkami.</p>
+        <p>Osobné životné náklady autora, osobné bývanie, automobil, dovolenky alebo iný súkromný majetok sa nepovažujú za náklady projektu a neznižujú základ určený na výpočet dotačného poolu. Legitímne náklady projektu – napríklad výroba, distribúcia, skladovanie, platobné poplatky, dane, právne, účtovné, technologické, marketingové a dodávateľské náklady – nákladmi projektu sú.</p>
+      </details>
+
+      <details>
+        <summary>3. Fáza I · prvých 200 vstupov</summary>
+        <p>Fáza I je limitovaná na prvých 200 vstupov – 100 tlačených a 100 e-book vstupov. Za každý oprávnený vstup patrí 10 dotačných jednotiek. Jedna osoba môže v tejto fáze uskutočniť maximálne 10 vstupov spolu a získať tak maximálne 100 jednotiek. Ak do konca fázy zostáva napríklad iba 5 vstupov, nie je možné v tejto fáze kúpiť 10.</p>
+      </details>
+
+      <details>
+        <summary>4. Fáza II · od 201. do 3 000. vstupu</summary>
+        <p>Osoba, ktorá má aspoň jeden oprávnený vstup vo fáze II, získava 1 dotačnú jednotku. V tejto fáze môže jedna osoba získať maximálne 1 jednotku. Účasť vo fáze I nevylučuje účasť vo fáze II – limity sa medzi fázami obnovujú a jednotky sa sčítavajú.</p>
+      </details>
+
+      <details>
+        <summary>5. Fáza III · od 3 001. do 100 000. vstupu</summary>
+        <p>Pre túto fázu je vyčlenený model jednej dotačnej jednotky na každých 5 oprávnených vstupov. Jednotky sa prideľujú transparentným náhodným mechanizmom. Osoba, ktorá v tejto fáze uskutoční 5 oprávnených vstupov na jedno meno, získava 1 jednotku garantovane; maximálne 1 jednotku na meno v tejto fáze. Garantované jednotky sa odpočítavajú z poolu určeného pre túto fázu, aby sa jeho celkový počet nezvyšoval.</p>
+      </details>
+
+      <details>
+        <summary>6. Fáza IV · od 100 001. do 1 000 000. vstupu</summary>
+        <p>Pre túto fázu je vyčlenený model jednej dotačnej jednotky na každých 50 oprávnených vstupov. Osoba, ktorá v tejto fáze uskutoční 50 oprávnených vstupov na jedno meno, získava 1 jednotku garantovane; maximálne 1 jednotku na meno v tejto fáze. Garantované jednotky sa odpočítavajú z poolu fázy.</p>
+      </details>
+
+      <details>
+        <summary>7. E-book-only vstup za 169 € a žrebovacia váha</summary>
+        <p>Každý štandardný oprávnený vstup má pri náhodných výberoch základnú váhu 1×. Každý e-book-only vstup za 169 € má váhu 2×. Váhy sa sčítavajú po jednotlivých vstupoch. Vyššia váha nezvyšuje počet garantovaných jednotiek a sama osebe negarantuje výhru. Spôsob platby – karta alebo bankový prevod – váhu nemení.</p>
+      </details>
+
+      <details>
+        <summary>8. Mesačné výbery počas 365-dňového odpočtu a pravidlo krajín</summary>
+        <p>Po dosiahnutí 1 milióna vstupov sa počas 365 dní každý mesiac vyberie 1 000 oprávnených podporovateľov z nákupov daného mesiaca; spolu je pre tento mechanizmus vyčlenených 12 000 jednotiek. Účasť vzniká iba z reálneho oprávneného vstupu uskutočneného v príslušnom mesiaci.</p>
+        <p>Ak niektorá krajina dosiahne aspoň 100 000 oprávnených vstupov, v rámci existujúcich 12 000 mesačných jednotiek sa zabezpečí, aby z tejto krajiny získalo dotačnú jednotku najmenej 100 rôznych podporovateľov. Nejde o ďalšie jednotky nad rámec poolu 12 000.</p>
+      </details>
+
+      <details>
+        <summary>9. Veľké náhodné výbery</summary>
+        <ul>
+          <li>100 výhercov spomedzi prvých 100 000 kupujúcich získa po 10 jednotiek – spolu 1 000 jednotiek.</li>
+          <li>Jeden výherca spomedzi prvého 1 milióna kupujúcich získa 1 000 jednotiek.</li>
+          <li>Pri plnom úspechu – 100 miliónov vstupov a viac – prebehne ďalší výber jedného výhercu spomedzi všetkých kupujúcich o 1 000 jednotiek.</li>
+        </ul>
+        <p>Pri týchto náhodných výberoch sa uplatňuje žrebovacia váha príslušných oprávnených vstupov vrátane 2× váhy e-book-only vstupov.</p>
+      </details>
+
+      <details>
+        <summary>10. Recenzný pool · 200 jednotiek</summary>
+        <p>Prvých 100 platných recenzií môže získať po 1 garantovanej jednotke. Ďalších 100 jednotiek je určených pre 100 najlepších ďalších platných recenzií podľa komunitného hlasovania. Oprávnenosť recenzie sa posudzuje pred zaradením do hlasovania; spam, plagiát alebo obsah bez skutočného vzťahu ku knihe sa nezaraďuje.</p>
+      </details>
+
+      <details>
+        <summary>11. Garanti dôvery · nové podmienky od 13. 10. 2026</summary>
+        <p>Garant dôvery je človek, ktorý pozná zámer STERONu a vlastným menom vyjadruje dôveru v jeho poctivé rozvíjanie. Negarantuje predaj, úspech ani finančný výsledok. Kúpa knihy, platený vstup ani osobná známosť s autorom nie sú podmienkou.</p>
+        <p>Doterajším garantom zostávajú všetky individuálne prisľúbené podmienky pri úspechu projektu zachované. Pôvodné schémy piatich alebo dvadsiatich jednotiek sa automaticky nevzťahujú na nových záujemcov.</p>
+        <p>Podľa nových pravidiel možno schváliť najviac 500 nových garantov navyše k doterajším. Schválený záujemca si môže zvoliť jednu podmienenú dotačnú jednotku z rezervy projektu alebo podporu bez nej. Rozhodnutie je súkromné; podporu bez jednotky zverejníme iba na jeho osobitné dobrovoľné želanie.</p>
+        <p>Miesto sa počíta pri prvom schválení bez ohľadu na prijatie jednotky a zostáva obsadené aj po skrytí profilu či ukončení podpory. Po 500 schváleniach sa nové prihlášky uzavrú. Evidovaná jednotka sa neodoberá za kritiku, nesúhlas ani ukončenie podpory. Jej prípadné plnenie podlieha cieľom, ročnému odpočtu a právnym, daňovým, finančným a organizačným podmienkam projektu; nejde o okamžitú odmenu ani garantovanú sumu.</p>
+        <p><a href="https://www.martin-matuska.com/about-1" target="_top">Aktuálne podmienky a prihláška garantov dôvery ↗</a></p>
+      </details>
+
+      <details>
+        <summary>12. Influencer pool · 5 000 jednotiek a ďalšie tvorivé príspevky</summary>
+        <p>Pre influencerov a tvorcov, ktorí sa pridajú k projektu a preukázateľne pomáhajú jeho rastu, je vyčlenený samostatný pool 5 000 jednotiek. Individuálny počet sa neurčuje iba podľa počtu followerov, ale podľa reálneho prínosu, dosahu, výsledku a podmienok konkrétnej spolupráce.</p>
+        <p>Ďalšie jednotky môžu byť vopred dohodnuté aj za inú významnú aktivitu – napríklad tvorbu, preklad, esej, grafiku, video alebo inú pomoc projektu. Takéto nové pridelenia sa čerpajú z nealokovaného dotačného depozitu.</p>
+      </details>
+
+      <details>
+        <summary>13. Rezerva dotačných jednotiek</summary>
+        <p>Rezerva predstavuje dosiaľ nepridelené dotačné jednotky v rámci celkového dotačného modelu, nie peňažný ani bankový depozit. Celkový rámec zostáva 100 000 jednotiek, pri plnom úspechu 150 000 jednotiek.</p>
+        <p>Každé nové pridelenie musí byť evidované v rámci existujúceho rámca a nesmie zvýšiť jeho celkový počet. Rezervu možno použiť na vopred oznámené komunitné programy, tvorivé spolupráce, mimoriadne výbery a nové garantstvo podľa jeho limitu. Už individuálne prisľúbené jednotky doterajších garantov zostávajú zachované.</p>
+        <p>Pevný údaj o zostávajúcom počte sa tu neuvádza, pretože sa mení podľa skutočných evidovaných pridelení. Tým sa nemenia pravidlá delenia čistého zisku ani existujúce prísľuby.</p>
+      </details>
+
+      <details>
+        <summary>14. Kumulácia jednotiek medzi fázami a programami</summary>
+        <p>Jedna osoba môže získavať dotačné jednotky z viacerých rôznych fáz a programov, ak konkrétne pravidlá neurčujú inak. Napríklad podporovateľ s maximom 100 jednotiek z fázy I môže neskôr získať ďalšiu jednotku vo fáze II, III a IV a zároveň sa môže kvalifikovať do recenzného, garantského alebo náhodného programu.</p>
+      </details>
+
+      <details>
+        <summary>15. Splátky, určenie fázy a postupné skracovanie splátkových možností</summary>
+        <p>Rozdelenie ceny 169 € na splátky je iba spôsob úhrady ceny vstupu. Dokončený vstup do projektu vzniká až po úspešnom zaplatení celej sumy. Dotačná fáza sa určuje podľa stavu projektu v okamihu poslednej úspešnej splátky; skoršie začatie splátok nezamyká skoršiu fázu.</p>
+        <p>Splátková dĺžka nesmie presiahnuť zostávajúci čas do konca 365-dňového odpočtu. Po spustení odpočtu sa 12-mesačný plán prestáva ponúkať. Pri zostávajúcom čase približne 6 mesiacov sa prestáva ponúkať 6-mesačný plán a pri približne 3 mesiacoch 3-mesačný plán. Rovnaký princíp sa použije na prípadné ďalšie splátkové dĺžky.</p>
+        <p>Tlačená kniha sa pri splátkach štandardne odosiela po úplnom zaplatení. Ak splátkový plán skončí predčasne, dokončený vstup ani dotačný nárok nevzniká. Projekt môže dobrovoľne umožniť zaslanie jednej tlačenej knihy po uhradení aspoň jednej tretiny ceny (56,34 €), ak o to podporovateľ požiada; tým nevzniká dokončený vstup ani dotačný nárok a nie sú dotknuté zákonné spotrebiteľské práva.</p>
+      </details>
+
+      <details>
+        <summary>16. Storno, refundácia a neúspešná platba</summary>
+        <p>Ak je objednávka stornovaná, platne refundovaná alebo nie je úspešne dokončená celá platba, dotačné nároky spojené s daným vstupom nevznikajú alebo zanikajú a takýto nedokončený vstup sa nezapočítava do centrálneho počítadla projektu. Vysporiadanie prijatých platieb sa riadi obchodnými podmienkami a povinnými spotrebiteľskými právami.</p>
+      </details>
+
+      <details>
+        <summary>17. Transparentnosť a ochrana súkromia</summary>
+        <p>Projekt má zverejňovať pravidlá, súhrnné počty jednotiek a overiteľnú mechaniku náhodných výberov. Menný zoznam kupujúcich ani držiteľov jednotiek sa verejne nezverejňuje. Ak si konkrétny výber vyžaduje verejné oznámenie výhercu, musí byť táto skutočnosť uvedená v pravidlách príslušného výberu vopred.</p>
+      </details>
+
+      <details>
+        <summary>18. Neplnoletí, dedenie nároku a pamätná tabuľa</summary>
+        <p>Doteraz komunikovaný princíp umožňuje významný prínos neplnoletej osoby odmeniť prostredníctvom jej rodiča alebo zákonného zástupcu. Ak oprávnená osoba zomrie, zámerom projektu je, aby jej oprávnený dotačný nárok nezanikol; konkrétny administratívny a právny postup prechodu na právnych nástupcov bude upravený v právnych podmienkach projektu.</p>
+        <p>Osoba, ktorá sa dobrovoľne vzdá svojho dotačného nároku v prospech ostatných, môže byť so svojím súhlasom uvedená na pamätnej tabuli projektu.</p>
+      </details>
+
+      <div class="disclaimer">
+        <strong>Dôležité:</strong> Kalkulačka aj pravidlá opisujú modelové a podmienené budúce mechanizmy projektu. Dotačná jednotka nie je investičný produkt ani garancia konkrétnej finančnej sumy. Skutočná hodnota závisí od reálneho úspechu projektu, čistého zisku projektu, splnenia príslušných cieľov a finálnych právnych, daňových a organizačných podmienok. Modelová hodnota zobrazená na stránke je odhad.
+      </div>
+    </section>
+
+    <section class="bottom-cta">
+      <div class="section-kicker">STERON PROJEKT</div>
+      <h2 id="bottomTitle">Vstúpiť do aktuálnej fázy</h2>
+      <p id="bottomText">Pozri si aktuálne podmienky vstupu, knihu, VIP obsah a benefity fázy, ktorá práve prebieha.</p>
+      <a class="cta" id="bottomJoin" href="https://www.martin-matuska.com/blank" target="_blank" rel="noopener">
+        <strong id="bottomJoinTitle">VSTÚPIŤ DO STERON PROJEKTU</strong>
+        <small id="bottomJoinSubtitle">Aktuálne podmienky sa menia automaticky podľa počtu predaných vstupov.</small>
+      </a>
+      <div class="motto">Nie je to istota. Je to skúška odvahy.</div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(() => {
+  const SITE_ORIGIN = "https://www.martin-matuska.com";
+  const MODEL_PROFIT_PER_ENTRY = 100;
+
+  const el = id => document.getElementById(id);
+  const nf = new Intl.NumberFormat("sk-SK");
+  const eur = new Intl.NumberFormat("sk-SK", {
+    style:"currency", currency:"EUR", maximumFractionDigits:0
+  });
+
+  const art = el("art");
+  const salesRange = el("salesRange");
+  const salesExact = el("salesExact");
+
+  const qtyIds = [
+    "f1Print","f1Ebook","f2Print","f2Ebook","f3Print","f3Ebook",
+    "f4Print","f4Ebook","postPrint","postEbook"
+  ];
+
+  let LIVE_SOLD_ENTRIES = 0;
+  let PROJECT_URL = "https://www.martin-matuska.com/blank";
+  let COUNTDOWN_END_DATE = null;
+  const INSTALLMENT_MONTHS = [12, 6, 3, 2];
+
+  function num(id){
+    const node = el(id);
+    let value = Number(node.value || 0);
+    if(!Number.isFinite(value)) value = 0;
+    const min = node.min !== "" ? Number(node.min) : 0;
+    const max = node.max !== "" ? Number(node.max) : Infinity;
+    value = Math.max(min, Math.min(max, Math.round(value)));
+    node.value = value;
+    return value;
+  }
+
+  function weight(printCount, ebookCount){
+    return printCount + ebookCount * 2;
+  }
+
+  function vstupyLabel(n){
+    n = Number(n) || 0;
+    if(n === 1) return "1 vstup";
+    if(n >= 2 && n <= 4) return `${nf.format(n)} vstupy`;
+    return `${nf.format(n)} vstupov`;
+  }
+
+  function jednotkyLabel(n){
+    n = Number(n) || 0;
+    if(n === 1) return "1 jednotka";
+    if(n >= 2 && n <= 4) return `${nf.format(n)} jednotky`;
+    return `${nf.format(n)} jednotiek`;
+  }
+
+  function installmentLabel(m){
+    if(m === 3) return "3 mesiace";
+    return `${m} mesiacov`;
+  }
+
+  function modelUnitValue(sales){
+    sales = Math.max(1000000, Number(sales) || 1000000);
+    const sharedPct = sales >= 100000000 ? 0.75 : 0.50;
+    const pool = sales >= 100000000 ? 150000 : 100000;
+    return (sales * MODEL_PROFIT_PER_ENTRY * sharedPct) / pool;
+  }
+
+  function scenarioUnitValue(sales){
+    sales = Math.max(1, Number(sales) || 1);
+    if(sales < 1000000) return 0;
+    return modelUnitValue(sales);
+  }
+
+  function currentUnitValue(sold){
+    if(sold < 1000000) return 0;
+    return modelUnitValue(sold);
+  }
+
+  const BASE_SCENARIO_POINTS = [
+    {sales:1,          pos:0},
+    {sales:200,        pos:13},
+    {sales:3000,       pos:28},
+    {sales:100000,     pos:44},
+    {sales:1000000,    pos:60},
+    {sales:10000000,   pos:73},
+    {sales:100000000,  pos:87},
+    {sales:1000000000, pos:100}
+  ];
+
+  function scenarioMinSales(){
+    return Math.max(1, Math.round(Number(LIVE_SOLD_ENTRIES)||1));
+  }
+
+  function baseSalesFromPos(pos){
+    const p = Math.max(0, Math.min(100, Number(pos)||0));
+    for(let i=0;i<BASE_SCENARIO_POINTS.length-1;i++){
+      const a = BASE_SCENARIO_POINTS[i], b = BASE_SCENARIO_POINTS[i+1];
+      if(p <= b.pos){
+        const t = (p-a.pos)/(b.pos-a.pos);
+        const la = Math.log10(a.sales), lb = Math.log10(b.sales);
+        return Math.max(1, Math.round(Math.pow(10, la + (lb-la)*Math.max(0,Math.min(1,t)))));
+      }
+    }
+    return 1000000000;
+  }
+
+  function basePosFromSales(sales){
+    const s = Math.max(1, Math.min(1000000000, Number(sales)||1));
+    for(let i=0;i<BASE_SCENARIO_POINTS.length-1;i++){
+      const a = BASE_SCENARIO_POINTS[i], b = BASE_SCENARIO_POINTS[i+1];
+      if(s <= b.sales){
+        const la = Math.log10(a.sales), lb = Math.log10(b.sales);
+        const t = lb === la ? 0 : (Math.log10(s)-la)/(lb-la);
+        return a.pos + (b.pos-a.pos)*Math.max(0,Math.min(1,t));
+      }
+    }
+    return 100;
+  }
+
+  // The visible slider is always 0–100, but 0 now represents the CURRENT
+  // live project state, never 1 or 0 sold entries.
+  function salesFromSlider(v){
+    const visiblePos = Math.max(0, Math.min(100, Number(v)||0));
+    const minBasePos = basePosFromSales(scenarioMinSales());
+    const basePos = minBasePos + (visiblePos/100) * (100-minBasePos);
+    return Math.max(scenarioMinSales(), baseSalesFromPos(basePos));
+  }
+
+  function sliderFromSales(sales){
+    const minSales = scenarioMinSales();
+    const s = Math.max(minSales, Number(sales)||minSales);
+    const minBasePos = basePosFromSales(minSales);
+    const basePos = basePosFromSales(Math.min(1000000000,s));
+    if(minBasePos >= 100) return 100;
+    return Math.max(0, Math.min(100, ((basePos-minBasePos)/(100-minBasePos))*100));
+  }
+
+
+  function scenarioInfo(sales){
+    sales = Math.max(1, Math.round(Number(sales)||1));
+
+    if(sales < 200) return {
+      key:"f1", badge:"FÁZA I · PRVÝCH 200", title:`${formatSalesCount(sales)} vstupov · fáza I`,
+      text:"Každý oprávnený vstup v tejto fáze získava 10 dotačných jednotiek. Maximálne 10 vstupov na jedno meno.",
+      rule:"10 jednotiek / vstup", accent:"#c99a3d", accent2:"#f1cf7a"
+    };
+    if(sales < 3000) return {
+      key:"f2", badge:"FÁZA II · 201 – 3 000", title:`${formatSalesCount(sales)} vstupov · fáza II`,
+      text:"Každé meno s oprávneným vstupom v tejto fáze získava 1 dotačnú jednotku; maximálne 1 na meno v tejto fáze.",
+      rule:"1 jednotka / meno", accent:"#d0a64c", accent2:"#efd18a"
+    };
+    if(sales < 100000) return {
+      key:"f3", badge:"FÁZA III · 3 001 – 100 000", title:`${formatSalesCount(sales)} vstupov · fáza III`,
+      text:"Jedna dotačná jednotka pripadá na každých 5 vstupov v transparentnom náhodnom mechanizme. 5 vstupov na jedno meno garantuje 1 jednotku.",
+      rule:"1 / 5 vstupov", accent:"#c4a062", accent2:"#ead0a0"
+    };
+    if(sales < 1000000) return {
+      key:"f4", badge:"FÁZA IV · 100 001 – 1 000 000", title:`${formatSalesCount(sales)} vstupov · fáza IV`,
+      text:"Jedna dotačná jednotka pripadá na každých 50 vstupov v náhodnom mechanizme. 50 vstupov na jedno meno garantuje 1 jednotku.",
+      rule:"1 / 50 vstupov", accent:"#b99b72", accent2:"#e6d3b2"
+    };
+    if(sales < 100000000) return {
+      key:"countdown", badge:"1 MILIÓN+ · 365-DŇOVÝ ODPOČET", title:`${formatSalesCount(sales)} vstupov · odpočet po dosiahnutí 1M`,
+      text:"Začína sa 365-dňový odpočet. Pri výsledku pod 100 miliónov sa v modeli delí 50 % čistého zisku projektu medzi 100 000 dotačných jednotiek.",
+      rule:"50 % / 100 000", accent:"#62adbf", accent2:"#a8e0eb"
+    };
+    return {
+      key:"success", badge:"PLNÝ ÚSPECH PROJEKTU", title:`${formatSalesCount(sales)} vstupov · plný úspech`,
+      text:"Od 100 miliónov vstupov sa aktivuje model plného úspechu: 75 % čistého zisku projektu sa delí medzi 150 000 dotačných jednotiek.",
+      rule:"75 % / 150 000", accent:"#d9aa43", accent2:"#f7d982"
+    };
+  }
+
+  function updateMilestoneSwitches(sales){
+    const switches = [...document.querySelectorAll(".milestone-switch")];
+    const minSales = scenarioMinSales();
+
+    switches.forEach(btn=>{
+      btn.classList.remove("active");
+      const milestoneSales = Number(btn.dataset.sales||0);
+      const isPast = !btn.dataset.live && milestoneSales > 0 && milestoneSales < minSales;
+      btn.disabled = isPast;
+      btn.classList.toggle("disabled-past", isPast);
+    });
+
+    const s = Math.max(minSales, Number(sales)||minSales);
+    let target = null;
+    if(s >= 1000000000) target = document.querySelector('[data-sales="1000000000"]');
+    else if(s >= 100000000) target = document.querySelector('[data-sales="100000000"]');
+    else if(s >= 1000000) target = document.querySelector('[data-sales="1000000"]');
+    else if(s >= 100000) target = document.querySelector('[data-sales="100000"]');
+    else if(s >= 3000) target = document.querySelector('[data-sales="3000"]');
+    else if(s >= 200) target = document.querySelector('[data-sales="200"]');
+    else target = document.querySelector('[data-live="1"]');
+    if(target) target.classList.add("active");
+  }
+
+  let lastScenarioWasSuccess = false;
+
+  function renderScenarioState(sales){
+    const s = Math.max(1, Math.round(Number(sales)||1));
+    const info = scenarioInfo(s);
+    const box = el("heroScenario");
+    const rangePos = sliderFromSales(s);
+
+    box.style.setProperty("--scenario-accent", info.accent);
+    box.style.setProperty("--scenario-accent2", info.accent2);
+    box.style.setProperty("--scenario-fill", `${rangePos}%`);
+
+    el("scenarioPhaseBadge").textContent = info.badge;
+    el("scenarioPhaseTitle").textContent = info.title;
+    el("scenarioPhaseText").textContent = info.text;
+    el("scenarioRule").textContent = info.rule;
+
+    box.classList.toggle("success-mode", info.key === "success");
+
+    if(info.key === "success"){
+      el("scenarioSplit").textContent = "75 % čistého zisku · 150 000 dotačných jednotiek";
+      el("scenarioSuccessAlert").classList.add("show");
+      if(!lastScenarioWasSuccess){
+        el("scenarioSuccessAlert").classList.remove("show");
+        void el("scenarioSuccessAlert").offsetWidth;
+        el("scenarioSuccessAlert").classList.add("show");
+      }
+      lastScenarioWasSuccess = true;
+    }else if(info.key === "countdown"){
+      el("scenarioSplit").textContent = "50 % čistého zisku · 100 000 dotačných jednotiek";
+      el("scenarioSuccessAlert").classList.remove("show");
+      lastScenarioWasSuccess = false;
+    }else{
+      el("scenarioSplit").textContent = "Hodnota sa začne modelovať po dosiahnutí 1 000 000 vstupov";
+      el("scenarioSuccessAlert").classList.remove("show");
+      lastScenarioWasSuccess = false;
+    }
+
+    renderScenarioMoney(el("scenarioUnitValue"), scenarioUnitValue(s));
+    updateMilestoneSwitches(s);
+    fitScenarioNumbers();
+  }
+
+
+  const SUPER = {
+    "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴",
+    "5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻","+":"⁺"
+  };
+
+  function superscriptNumber(n){
+    return String(n).split("").map(ch=>SUPER[ch]||ch).join("");
+  }
+
+  function scientificText(value, suffix=""){
+    const n = Number(value);
+    if(!Number.isFinite(n)) return `∞${suffix}`;
+
+    const abs = Math.abs(n);
+    if(abs === 0) return `0${suffix}`;
+
+    const exp = Math.floor(Math.log10(abs));
+    const coeff = n / Math.pow(10, exp);
+    const rounded = Math.abs(coeff) >= 9.995
+      ? coeff.toFixed(1)
+      : coeff.toFixed(2);
+    const clean = rounded.replace(/\.?0+$/,"");
+
+    return `${clean} × 10${superscriptNumber(exp)}${suffix}`;
+  }
+
+  function formatSalesCount(value){
+    const n = Number(value);
+    if(!Number.isFinite(n)) return "∞";
+    if(Math.abs(n) >= 1e12) return scientificText(n);
+    return nf.format(Math.round(n));
+  }
+
+  function formatScenarioMoney(value){
+    const n = Number(value);
+    if(!Number.isFinite(n)) return "∞ €";
+    if(Math.abs(n) >= 1e12) return scientificText(n," €");
+    return eur.format(n);
+  }
+
+  function renderScenarioMoney(node, value){
+    const n = Number(value);
+
+    if(!Number.isFinite(n)){
+      node.textContent = "∞ €";
+      node.style.fontSize = "18px";
+      return;
+    }
+
+    // From 10^12 upward, switch immediately to scientific notation.
+    if(Math.abs(n) >= 1e12){
+      node.textContent = scientificText(n," €");
+      node.style.fontSize = "18px";
+      return;
+    }
+
+    // Below 10^12 keep the familiar grouped-euro notation and shrink only
+    // as much as is necessary to keep the full number AND € visible.
+    node.textContent = eur.format(n);
+    let size = 18;
+    const minSize = 11.5;
+    node.style.fontSize = `${size}px`;
+
+    requestAnimationFrame(()=>{
+      while(node.scrollWidth > node.clientWidth && size > minSize){
+        size -= 0.5;
+        node.style.fontSize = `${size}px`;
+      }
+
+      // Last-resort safety: if the card is exceptionally narrow, use
+      // scientific notation rather than clipping the currency symbol.
+      if(node.scrollWidth > node.clientWidth){
+        node.textContent = scientificText(n," €");
+        node.style.fontSize = "16px";
+      }
+    });
+  }
+
+  function fitExactInput(){
+    const input = el("salesExact");
+    const raw = String(input.value || "");
+    const digits = raw.replace(/[^\d]/g,"").length;
+
+    // Never become microscopic. Long values remain inside the input and
+    // can horizontally scroll while being edited.
+    let size = 12;
+    if(digits > 12) size = 11;
+    if(digits > 16) size = 10;
+    if(digits > 21) size = 9.2;
+    input.style.fontSize = `${size}px`;
+  }
+
+  function compactExactInputOnBlur(){
+    const input = el("salesExact");
+    const raw = String(input.value || "").trim();
+
+    // Already in exponent form: normalize if JavaScript can read it.
+    if(/[eE]/.test(raw)){
+      const n = Number(raw);
+      if(Number.isFinite(n)){
+        input.value = n.toExponential(4).replace(/\.?0+e/,"e");
+      }
+      fitExactInput();
+      return;
+    }
+
+    // For a gigantic plain integer, build exponent notation from the text
+    // itself. This also works beyond JavaScript's normal floating-point range.
+    const sign = raw.startsWith("-") ? "-" : "";
+    const digits = raw.replace(/\D/g,"").replace(/^0+/,"");
+
+    if(digits.length >= 16){
+      const first = digits[0] || "0";
+      const tail = digits.slice(1,5).replace(/0+$/,"");
+      const coeff = tail ? `${first}.${tail}` : first;
+      input.value = `${sign}${coeff}e+${Math.max(0,digits.length-1)}`;
+      fitExactInput();
+      return;
+    }
+
+    const n = Number(raw);
+    if(Number.isFinite(n) && Math.abs(n) >= 1e15){
+      input.value = n.toExponential(4).replace(/\.?0+e/,"e");
+    }
+    fitExactInput();
+  }
+
+  function fitScenarioNumbers(){
+    fitExactInput();
+  }
+
+  function tapCharacter(){
+    art.classList.remove("tap-active");
+    void art.offsetWidth;
+    art.classList.add("tap-active");
+    setTimeout(()=>art.classList.remove("tap-active"), 620);
+  }
+
+  function postInteraction(payload){
+    try{
+      window.parent.postMessage({source:"steronCalculator", ...payload}, SITE_ORIGIN);
+    }catch(e){}
+  }
+
+  function getLivePhase(sold){
+    if(sold < 200) return {
+      label:"FÁZA I", end:200, start:0,
+      rule:"10 jednotiek za každý vstup",
+      cta:"VSTÚPIŤ DO 1. FÁZY",
+      sub:"Aktuálne: 10 dotačných jednotiek za každý oprávnený vstup"
+    };
+    if(sold < 3000) return {
+      label:"FÁZA II", end:3000, start:200,
+      rule:"1 jednotka na meno v tejto fáze",
+      cta:"VSTÚPIŤ DO 2. FÁZY",
+      sub:"Aktuálne: 1 dotačná jednotka na jedno meno"
+    };
+    if(sold < 100000) return {
+      label:"FÁZA III", end:100000, start:3000,
+      rule:"Náhodný mechanizmus 1 jednotka / 5 vstupov",
+      cta:"VSTÚPIŤ DO 3. FÁZY",
+      sub:"5 vstupov na jedno meno = garantovaná 1 jednotka"
+    };
+    if(sold < 1000000) return {
+      label:"FÁZA IV", end:1000000, start:100000,
+      rule:"Náhodný mechanizmus 1 jednotka / 50 vstupov",
+      cta:"VSTÚPIŤ DO 4. FÁZY",
+      sub:"50 vstupov na jedno meno = garantovaná 1 jednotka"
+    };
+    return {
+      label:"FÁZA V · 365-DŇOVÝ ODPOČET", end:null, start:1000000,
+      rule:"1 000 mesačných výhercov z nákupov daného mesiaca",
+      cta:"VSTÚPIŤ DO STERON PROJEKTU",
+      sub:"Aktuálne prebieha 365-dňový odpočet a mesačné výbery"
+    };
+  }
+
+
+  function daysUntil(dateLike){
+    if(!dateLike) return null;
+    const end = new Date(dateLike);
+    if(Number.isNaN(end.getTime())) return null;
+    const now = new Date();
+    return Math.ceil((end.getTime() - now.getTime()) / 86400000);
+  }
+
+  function renderInstallments(){
+    const wrap = el("installmentOptions");
+    const sold = Math.max(0, Number(LIVE_SOLD_ENTRIES)||0);
+    const days = daysUntil(COUNTDOWN_END_DATE);
+    const countdownStarted = sold >= 1000000;
+
+    let available = [];
+    let text = "";
+
+    if(!countdownStarted){
+      available = [...INSTALLMENT_MONTHS];
+      text = "Pred spustením odpočtu sú dostupné všetky ponúkané dĺžky.";
+    }else if(days === null){
+      available = [6,3,2];
+      text = "365-dňový odpočet beží. Presný deadline treba načítať z centrálneho stavu projektu.";
+    }else{
+      // 12-mesačný plán sa po štarte countdownu už neponúka.
+      if(days > 183) available.push(6);
+      if(days > 92) available.push(3);
+      if(days > 62) available.push(2);
+
+      if(days > 0){
+        text = `Do konca odpočtu zostáva približne ${nf.format(days)} dní.`;
+      }else{
+        text = "365-dňový odpočet sa skončil.";
+      }
+    }
+
+    const activeSet = new Set(available);
+    wrap.innerHTML = INSTALLMENT_MONTHS.map(m => {
+      const on = activeSet.has(m);
+      return `<span class="installment-pill ${on ? "" : "off"}">${installmentLabel(m)}</span>`;
+    }).join("") + `<span class="installment-pill">jednorazovo</span>`;
+
+    el("installmentDeadlineText").textContent = text;
+  }
+
+  function renderLiveState(){
+    const sold = Math.max(0, Math.round(Number(LIVE_SOLD_ENTRIES) || 0));
+    const phase = getLivePhase(sold);
+
+    el("livePhase").textContent = phase.label;
+    el("liveSold").textContent = nf.format(sold);
+    el("livePhaseRule").textContent = phase.rule;
+    el("liveUnitValue").textContent = eur.format(currentUnitValue(sold));
+
+    if(sold < 1000000){
+      el("liveUnitNote").textContent =
+        "Modelová hodnota je zatiaľ 0 €. Začne rásť po dosiahnutí 1 000 000 vstupov; aj potom pôjde iba o odhad.";
+    }else{
+      el("liveUnitNote").textContent =
+        "Priebežný modelový odhad podľa aktuálneho počtu predaných vstupov. Nie je to garantovaná hodnota.";
+    }
+
+    if(phase.end){
+      const remaining = Math.max(0, phase.end - sold);
+      el("liveRemaining").textContent = nf.format(remaining);
+      const progress = Math.max(0, Math.min(100, ((sold - phase.start)/(phase.end-phase.start))*100));
+      el("liveProgressBar").style.width = progress + "%";
+    }else{
+      el("liveRemaining").textContent = "ODPOČET";
+      el("liveProgressBar").style.width = "100%";
+    }
+
+    el("joinTitle").textContent = phase.cta;
+    el("joinSubtitle").textContent = phase.sub;
+    el("bottomJoinTitle").textContent = phase.cta;
+    el("bottomJoinSubtitle").textContent = phase.sub;
+    el("bottomTitle").textContent = phase.label + " · vstúpiť do projektu";
+    renderInstallments();
+  }
+
+  function enforcePhase1(changedId){
+    const p = num("f1Print");
+    const e = num("f1Ebook");
+    const total = p + e;
+    if(total <= 10){
+      el("f1Warning").textContent = "";
+      return;
+    }
+    const changed = el(changedId);
+    const otherId = changedId === "f1Print" ? "f1Ebook" : "f1Print";
+    const other = num(otherId);
+    changed.value = Math.max(0, 10 - other);
+    el("f1Warning").textContent = "Limit fázy I je maximálne 10 vstupov spolu na jedno meno.";
+  }
+
+  function getPosition(){
+    const f1p = num("f1Print"), f1e = num("f1Ebook");
+    const f2p = num("f2Print"), f2e = num("f2Ebook");
+    const f3p = num("f3Print"), f3e = num("f3Ebook");
+    const f4p = num("f4Print"), f4e = num("f4Ebook");
+    const pp = num("postPrint"), pe = num("postEbook");
+
+    const f1n = f1p + f1e, f2n = f2p + f2e, f3n = f3p + f3e, f4n = f4p + f4e;
+    const postN = pp + pe;
+
+    const f1w = weight(f1p,f1e);
+    const f2w = weight(f2p,f2e);
+    const f3w = weight(f3p,f3e);
+    const f4w = weight(f4p,f4e);
+    const postW = weight(pp,pe);
+
+    const f1Units = f1n * 10;
+    const f2Units = f2n > 0 ? 1 : 0;
+    const f3Units = f3n >= 5 ? 1 : 0;
+    const f4Units = f4n >= 50 ? 1 : 0;
+
+    const review = el("reviewUnit").checked ? 1 : 0;
+    const guarantor = Number(el("guarantorType").value || 0);
+    const influencer = num("influencerUnits");
+    const other = num("otherUnits");
+    const won =
+      (el("wonMonthly").checked ? 1 : 0) +
+      (el("wonFirst100k").checked ? 10 : 0) +
+      (el("wonFirst1m").checked ? 1000 : 0) +
+      (el("wonAllBuyers").checked ? 1000 : 0);
+
+    return {
+      f1p,f1e,f2p,f2e,f3p,f3e,f4p,f4e,pp,pe,
+      f1n,f2n,f3n,f4n,postN,
+      f1w,f2w,f3w,f4w,postW,
+      f1Units,f2Units,f3Units,f4Units,
+      review,guarantor,influencer,other,won,
+      guaranteed: f1Units+f2Units+f3Units+f4Units+review+guarantor+influencer+other+won,
+      first100kWeight: f1w+f2w+f3w,
+      first1mWeight: f1w+f2w+f3w+f4w,
+      allWeight: f1w+f2w+f3w+f4w+postW
+    };
+  }
+
+  function renderPhaseSummaries(p){
+    el("f1Summary").innerHTML =
+      `${vstupyLabel(p.f1n)} · <b>${jednotkyLabel(p.f1Units)}</b> · žrebovacia váha ${nf.format(p.f1w)}×`;
+
+    el("f2Summary").innerHTML =
+      `${vstupyLabel(p.f2n)} · <b>${jednotkyLabel(p.f2Units)}</b> · žrebovacia váha ${nf.format(p.f2w)}×`;
+
+    el("f3Summary").innerHTML =
+      `${vstupyLabel(p.f3n)} · <b>${jednotkyLabel(p.f3Units)} garantovane</b> · žrebovacia váha ${nf.format(p.f3w)}×`;
+    el("f3Warning").textContent =
+      p.f3n > 0 && p.f3n < 5
+        ? `Do garantovanej jednotky zostáva ${5-p.f3n} vstupov. Dovtedy ide o náhodný mechanizmus.`
+        : p.f3n >= 5
+          ? "Garantovaná 1 jednotka vo fáze III je splnená; ďalšie vstupy už nevytvárajú druhú jednotku v tejto fáze."
+          : "";
+
+    el("f4Summary").innerHTML =
+      `${vstupyLabel(p.f4n)} · <b>${jednotkyLabel(p.f4Units)} garantovane</b> · žrebovacia váha ${nf.format(p.f4w)}×`;
+    el("f4Warning").textContent =
+      p.f4n > 0 && p.f4n < 50
+        ? `Do garantovanej jednotky zostáva ${50-p.f4n} vstupov. Dovtedy ide o náhodný mechanizmus.`
+        : p.f4n >= 50
+          ? "Garantovaná 1 jednotka vo fáze IV je splnená; ďalšie vstupy už nevytvárajú druhú jednotku v tejto fáze."
+          : "";
+
+    if(p.postN > 0){
+      el("monthlyStatus").textContent = "AKTÍVNY";
+      el("monthlyStatus").classList.add("active");
+      el("postSummary").innerHTML =
+        `${vstupyLabel(p.postN)} v mesiaci · <b>žrebovacia váha ${nf.format(p.postW)}×</b> · mesačný výber je aktívny`;
+    }else{
+      el("monthlyStatus").textContent = "NEAKTÍVNY";
+      el("monthlyStatus").classList.remove("active");
+      el("postSummary").textContent = "0 vstupov · mesačný výber nie je aktívny";
+    }
+  }
+
+  function renderDraws(p){
+    const rows = [];
+
+    function add(title, text, w){
+      rows.push(
+        `<div class="draw-row"><div><b>${title}</b><span>${text}</span></div><div class="draw-weight">${nf.format(w)}×</div></div>`
+      );
+    }
+
+    if(p.f3n > 0 && p.f3n < 5){
+      add("Fáza III · možná +1 jednotka",
+          `Náhodný mechanizmus pred dosiahnutím 5 vstupov. Tvojich ${nf.format(p.f3n)} vstupov má v tomto výbere uvedenú váhu.`,
+          p.f3w);
+    }
+
+    if(p.f4n > 0 && p.f4n < 50){
+      add("Fáza IV · možná +1 jednotka",
+          `Náhodný mechanizmus pred dosiahnutím 50 vstupov. Tvojich ${nf.format(p.f4n)} vstupov má v tomto výbere uvedenú váhu.`,
+          p.f4w);
+    }
+
+    if(p.first100kWeight > 0 && !el("wonFirst100k").checked){
+      add("100 × 10 jednotiek z prvých 100k",
+          "Možná výhra +10 jednotiek. Váha zahŕňa oprávnené vstupy z fáz I–III.",
+          p.first100kWeight);
+    }
+
+    if(p.first1mWeight > 0 && !el("wonFirst1m").checked){
+      add("1 000 jednotiek z prvého milióna",
+          "Možná výhra +1 000 jednotiek. Váha zahŕňa oprávnené vstupy z fáz I–IV.",
+          p.first1mWeight);
+    }
+
+    if(p.postW > 0 && !el("wonMonthly").checked){
+      add("Mesačný výber počas odpočtu",
+          "Možná výhra +1 jednotka. Do tohto výberu sa počítajú iba vstupy zadané pre príslušný mesiac.",
+          p.postW);
+    }
+
+    if(p.allWeight > 0 && !el("wonAllBuyers").checked){
+      add("Výber zo všetkých kupujúcich pri plnom úspechu",
+          "Pri 100M+ možná výhra +1 000 jednotiek. Váha zahŕňa všetky oprávnené zadané vstupy.",
+          p.allWeight);
+    }
+
+    if(!rows.length){
+      el("drawList").innerHTML =
+        `<div class="draw-empty">Zatiaľ sa nezobrazuje žiadna budúca náhodná možnosť. Zadaj oprávnené vstupy alebo označ už získané výhry.</div>`;
+    }else{
+      rows.push(
+        `<div class="draw-empty">Žrebovacia váha neznamená presné percento výhry. Skutočná pravdepodobnosť závisí od celkového počtu a váhy všetkých oprávnených účastníkov konkrétneho výberu.</div>`
+      );
+      el("drawList").innerHTML = rows.join("");
+    }
+  }
+
+  function calculatePersonal(source="auto"){
+    const p = getPosition();
+    renderPhaseSummaries(p);
+    renderDraws(p);
+
+    const scenarioSales = Math.max(1, Number(salesExact.value)||1);
+    const unit = scenarioUnitValue(scenarioSales);
+
+    el("guaranteedUnits").textContent = nf.format(p.guaranteed);
+    el("overallWeight").textContent = nf.format(p.allWeight) + "×";
+    el("personalUnitValue").textContent = formatScenarioMoney(unit);
+    el("personalValue").textContent = eur.format(p.guaranteed * unit);
+
+    const parts = [];
+    if(p.f1Units) parts.push(`fáza I ${p.f1Units}`);
+    if(p.f2Units) parts.push(`fáza II ${p.f2Units}`);
+    if(p.f3Units) parts.push(`fáza III ${p.f3Units}`);
+    if(p.f4Units) parts.push(`fáza IV ${p.f4Units}`);
+    if(p.review) parts.push(`recenzia ${p.review}`);
+    if(p.guarantor) parts.push(`garant ${p.guarantor}`);
+    if(p.influencer) parts.push(`influencer ${p.influencer}`);
+    if(p.other) parts.push(`iné ${p.other}`);
+    if(p.won) parts.push(`už vyhrané ${p.won}`);
+
+    el("guaranteedCaption").textContent =
+      parts.length ? parts.join(" · ") : "Zatiaľ nemáš zadanú garantovanú ani už získanú jednotku.";
+
+    el("personalValueCaption").textContent =
+      `${nf.format(p.guaranteed)} × ${formatScenarioMoney(unit)} pri scenári ${formatSalesCount(scenarioSales)} vstupov. Budúce možné výhry sa sem nepripočítavajú.`;
+
+    if(source !== "auto"){
+      tapCharacter();
+      postInteraction({
+        type:"interaction",
+        scenarioSales,
+        guaranteedUnits:p.guaranteed,
+        overallWeight:p.allWeight
+      });
+    }
+  }
+
+  function setScenarioSales(sales, source="scenario"){
+    sales = Math.max(scenarioMinSales(), Math.round(Number(sales)||scenarioMinSales()));
+    salesExact.value = sales;
+    salesRange.value = sliderFromSales(sales);
+    renderScenarioState(sales);
+    calculatePersonal(source);
+  }
+
+  document.querySelectorAll(".qty-stepper button").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const id = btn.dataset.input;
+      const delta = Number(btn.dataset.delta || 0);
+      const input = el(id);
+      let next = Math.max(0, Math.round(Number(input.value)||0) + delta);
+
+      if(id === "f1Print" || id === "f1Ebook"){
+        const otherId = id === "f1Print" ? "f1Ebook" : "f1Print";
+        const other = Math.max(0, Math.round(Number(el(otherId).value)||0));
+        next = Math.min(next, Math.max(0,10-other));
+        if(next + other >= 10 && delta > 0){
+          el("f1Warning").textContent = "Limit fázy I je maximálne 10 vstupov spolu na jedno meno.";
+        }
+      }
+
+      input.value = next;
+      calculatePersonal("stepper");
+    });
+  });
+
+  qtyIds.forEach(id=>{
+    el(id).addEventListener("input",()=>{
+      if(id === "f1Print" || id === "f1Ebook") enforcePhase1(id);
+      calculatePersonal("qty");
+    });
+    el(id).addEventListener("change",()=>{
+      if(id === "f1Print" || id === "f1Ebook") enforcePhase1(id);
+      calculatePersonal("qty");
+    });
+  });
+
+  [
+    "reviewUnit","guarantorType","influencerUnits","otherUnits",
+    "wonMonthly","wonFirst100k","wonFirst1m","wonAllBuyers"
+  ].forEach(id=>{
+    const node = el(id);
+    node.addEventListener("change",()=>calculatePersonal("extra"));
+    if(node.type === "number"){
+      node.addEventListener("input",()=>calculatePersonal("extra"));
+    }
+  });
+
+  salesRange.addEventListener("input",()=>{
+    const sales = salesFromSlider(salesRange.value);
+    salesExact.value = sales;
+    renderScenarioState(sales);
+    calculatePersonal("slider");
+  });
+
+  salesExact.addEventListener("input",()=>{
+    fitExactInput();
+    const v = Number(salesExact.value);
+    if(Number.isFinite(v) && v >= scenarioMinSales()){
+      salesRange.value = sliderFromSales(v);
+      renderScenarioState(v);
+      calculatePersonal("exact");
+    }
+  });
+
+  salesExact.addEventListener("blur", compactExactInputOnBlur);
+
+  salesExact.addEventListener("change",()=>{
+    const requested = Number(salesExact.value);
+    setScenarioSales(
+      Number.isFinite(requested) ? Math.max(scenarioMinSales(), requested) : scenarioMinSales(),
+      "exact"
+    );
+  });
+
+  document.querySelectorAll(".milestone-switch").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const sales = btn.dataset.live
+        ? Math.max(1, Math.round(Number(LIVE_SOLD_ENTRIES)||1))
+        : Number(btn.dataset.sales||1);
+      setScenarioSales(sales,"milestone");
+    });
+  });
+
+  function navigateProject(){
+    try{
+      window.parent.postMessage({
+        source:"steronCalculator",
+        type:"navigate",
+        target:"shop",
+        url:PROJECT_URL
+      }, "*");
+    }catch(e){
+      try{
+        window.open(PROJECT_URL, "_blank", "noopener");
+      }catch(_){}
+    }
+  }
+
+
+  window.addEventListener("message",(event)=>{
+    if(event.source!==window.parent||event.origin!==SITE_ORIGIN)return;
+    const data = event.data || {};
+    if(data.source !== "steronProjectState") return;
+
+    if(Number.isFinite(Number(data.soldEntries))){
+      LIVE_SOLD_ENTRIES = Number(data.soldEntries);
+    }
+    if(typeof data.projectUrl === "string" && data.projectUrl){
+      PROJECT_URL = data.projectUrl;
+    }
+    if(typeof data.countdownEndDate === "string" && data.countdownEndDate){
+      COUNTDOWN_END_DATE = data.countdownEndDate;
+    }else if(data.countdownEndDate === null || data.countdownEndDate === ""){
+      COUNTDOWN_END_DATE = null;
+    }
+    renderLiveState();
+
+    const liveFloor = scenarioMinSales();
+    el("milestoneNow").textContent = nf.format(Math.max(0, Math.round(LIVE_SOLD_ENTRIES)));
+    el("scenarioMinLabel").textContent = `TERAZ ${nf.format(liveFloor)}`;
+    salesExact.min = String(liveFloor);
+
+    // Keep the default full-success scenario unless the real project
+    // has already moved beyond it.
+    const selected = Number(salesExact.value)||100000000;
+    setScenarioSales(Math.max(selected, liveFloor), "cms");
+  });
+
+  let responsiveRaf = 0;
+  let lastResponsiveWidth = window.innerWidth;
+
+  function refreshResponsiveState(){
+    cancelAnimationFrame(responsiveRaf);
+    responsiveRaf = requestAnimationFrame(()=>{
+      const currentWidth = window.innerWidth;
+
+      // Re-render only when the iframe/browser width actually changes.
+      if(currentWidth === lastResponsiveWidth) return;
+      lastResponsiveWidth = currentWidth;
+
+      const currentScenario = Math.max(
+        scenarioMinSales(),
+        Number(salesExact.value) || 100000000
+      );
+      salesRange.value = sliderFromSales(currentScenario);
+      renderScenarioState(currentScenario);
+      fitScenarioNumbers();
+    });
+  }
+
+  window.addEventListener("resize", refreshResponsiveState, {passive:true});
+  window.addEventListener("orientationchange", ()=>{
+    lastResponsiveWidth = -1;
+    setTimeout(refreshResponsiveState, 80);
+  }, {passive:true});
+
+  renderLiveState();
+  el("scenarioMinLabel").textContent = `TERAZ ${nf.format(scenarioMinSales())}`;
+  salesExact.min = String(scenarioMinSales());
+  setScenarioSales(Math.max(100000000, scenarioMinSales()),"auto");
+  fitScenarioNumbers();
+  calculatePersonal("auto");
+window.parent.postMessage({source:"steronCalculator",type:"ready"}, SITE_ORIGIN);
+})();
+</script>
+
+</body>
+</html>
